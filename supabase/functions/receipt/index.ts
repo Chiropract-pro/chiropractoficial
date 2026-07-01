@@ -36,16 +36,57 @@ function escapeHtml(s: string): string {
     .replaceAll("'", '&#39;');
 }
 
+function pendingHtml(status?: string): string {
+  const declined = status === 'declined' || status === 'voided' || status === 'error';
+  const title = declined ? 'El pago no se completó' : 'Pago recibido ✓';
+  const msg = declined
+    ? 'Tu pago no pudo procesarse. Intenta de nuevo o escríbenos por WhatsApp.'
+    : 'Estamos generando tu recibo. Esta página se actualizará en unos segundos.';
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+${declined ? '' : '<meta http-equiv="refresh" content="5">'}
+<title>${title} — chiropract.co</title>
+<style>body{font-family:'Inter',-apple-system,sans-serif;max-width:480px;margin:15vh auto;padding:32px;text-align:center;color:#131b2e}
+.c{background:#fff;border-radius:16px;padding:40px 32px;box-shadow:0 4px 20px rgba(19,27,46,.06)}
+h1{color:${declined ? '#b23c22' : '#005c55'};font-size:22px;margin:0 0 8px}
+p{color:#3e4947;font-size:14px;line-height:1.6}
+.dot{width:44px;height:44px;border-radius:50%;background:${declined ? '#fdf2f0' : '#e1f5ee'};margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:22px}</style>
+</head><body><div class="c"><div class="dot">${declined ? '⚠️' : '✅'}</div>
+<h1>${title}</h1><p>${msg}</p></div></body></html>`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   const url = new URL(req.url);
-  const saleId = url.searchParams.get('sale_id');
-  if (!saleId) {
-    return new Response('Missing sale_id', { status: 400, headers: corsHeaders });
-  }
+  let saleId = url.searchParams.get('sale_id');
+  const paymentId = url.searchParams.get('payment_id');
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+  // Redirect de Wompi trae payment_id (no sale_id). Resolvemos el sale asociado.
+  // El sale lo crea el webhook de forma asíncrona, así que puede no existir aún.
+  if (!saleId && paymentId) {
+    const { data: pay } = await supabase
+      .from('payments')
+      .select('sale_id, status')
+      .eq('id', paymentId)
+      .maybeSingle();
+
+    if (pay?.sale_id) {
+      saleId = pay.sale_id;
+    } else {
+      // Pago recibido pero el recibo aún se está generando (o el pago no se aprobó).
+      return new Response(pendingHtml(pay?.status), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' },
+      });
+    }
+  }
+
+  if (!saleId) {
+    return new Response('Missing sale_id or payment_id', { status: 400, headers: corsHeaders });
+  }
 
   const { data: sale, error: saleErr } = await supabase
     .from('sales')

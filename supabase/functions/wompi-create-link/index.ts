@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
       currency: 'COP',
       amount_in_cents: amountInCents,
       expires_at: payment.expires_at,
-      redirect_url: `${SUPABASE_URL.replace('.supabase.co', '.supabase.co')}/functions/v1/receipt?sale_id=${payment.id}`,
+      redirect_url: `${SUPABASE_URL.replace('.supabase.co', '.supabase.co')}/functions/v1/receipt?payment_id=${payment.id}`,
     };
 
     const wompiResp = await fetch(`${WOMPI_BASE}/payment_links`, {
