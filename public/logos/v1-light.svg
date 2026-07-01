@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 80" width="280" height="80">
+  <!-- V1 versión LIGHT (para fondos oscuros: navbar dark, redes, watermark sobre fotos) -->
+  <g transform="translate(8 8)">
+    <rect x="0" y="0" width="56" height="64" rx="6" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+    <path d="M 28 10 Q 38 12 36 18 Q 34 22 28 22 Q 22 22 20 18 Q 18 12 28 10 Z" fill="#ffffff"/>
+    <path d="M 28 22 Q 18 24 20 30 Q 22 34 28 34 Q 34 34 36 30 Q 38 24 28 22 Z" fill="#ffffff"/>
+    <path d="M 28 34 Q 38 36 36 42 Q 34 46 28 46 Q 22 46 20 42 Q 18 36 28 34 Z" fill="#ffffff"/>
+    <path d="M 28 46 Q 18 48 20 54 Q 22 58 28 58 Q 34 58 36 54 Q 38 48 28 46 Z" fill="#ffffff"/>
+  </g>
+  <text x="78" y="50" font-family="'Inter', -apple-system, system-ui, sans-serif" font-size="32" letter-spacing="-1.2">
+    <tspan fill="#ffffff" font-weight="700">chiropract</tspan><tspan fill="#9cf2e8" font-weight="500">.co</tspan>
+  </text>
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Solo el símbolo (icon app, watermark, redes sociales) -->
+  <defs>
+    <linearGradient id="gi" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f766e"/>
+      <stop offset="100%" stop-color="#005c55"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="0" width="56" height="64" rx="6" fill="none" stroke="#005c55" stroke-width="2.5"/>
+  <path d="M 32 10 Q 42 12 40 18 Q 38 22 32 22 Q 26 22 24 18 Q 22 12 32 10 Z" fill="url(#gi)"/>
+  <path d="M 32 22 Q 22 24 24 30 Q 26 34 32 34 Q 38 34 40 30 Q 42 24 32 22 Z" fill="url(#gi)"/>
+  <path d="M 32 34 Q 42 36 40 42 Q 38 46 32 46 Q 26 46 24 42 Q 22 36 32 34 Z" fill="url(#gi)"/>
+  <path d="M 32 46 Q 22 48 24 54 Q 26 58 32 58 Q 38 58 40 54 Q 42 48 32 46 Z" fill="url(#gi)"/>
+</svg>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>chiropract.co — logo final V1</title>
+<link rel="icon" type="image/svg+xml" href="v1-favicon.svg">
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, system-ui, sans-serif; margin: 0; background: #f2f3ff; color: #131b2e; padding: 40px 20px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 32px; margin: 0 0 4px; letter-spacing: -1px; }
+  .lede { color: #3e4947; font-size: 16px; margin: 0 0 32px; }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #005c55; margin: 32px 0 12px; }
+  .card { background: white; border-radius: 16px; padding: 28px; margin-bottom: 16px; border: 1px solid #dae2fd; box-shadow: 0 4px 20px rgba(19,27,46,0.04); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .ctx { padding: 32px 24px; border-radius: 12px; display: flex; align-items: center; justify-content: center; min-height: 120px; }
+  .ctx-light { background: #ffffff; border: 1px solid #dae2fd; }
+  .ctx-dark { background: #0f172a; }
+  .ctx-color { background: linear-gradient(135deg, #005c55 0%, #0f766e 100%); }
+  .ctx-cream { background: #faf8ff; border: 1px solid #dae2fd; }
+  .ctx-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #6e7977; margin-bottom: 6px; }
+  .ctx img { max-width: 90%; max-height: 80px; }
+  .nav-mock { background: rgba(250,248,255,0.9); backdrop-filter: blur(20px); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px; border: 1px solid #dae2fd; }
+  .nav-mock img { height: 36px; }
+  .nav-links { display: flex; gap: 24px; font-size: 14px; color: #3e4947; }
+  .sidebar-mock { background: #0f172a; padding: 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; }
+  .sidebar-mock img { height: 32px; }
+  .sidebar-mock span { color: white; font-size: 13px; font-weight: 600; }
+  .favicon-row { display: flex; gap: 16px; align-items: center; padding: 16px; background: #eaedff; border-radius: 8px; }
+  .favicon-tab { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: white; border-radius: 6px 6px 0 0; font-size: 11px; }
+  .favicon-tab img { width: 16px; height: 16px; }
+  .scale-32 img { width: 32px; height: 32px; }
+  .scale-64 img { width: 64px; height: 64px; }
+  .vote { margin-top: 24px; padding: 20px; background: linear-gradient(135deg, #005c55, #0f766e); color: white; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+  .vote strong { color: #9cf2e8; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>chiropract.co — Logo final</h1>
+    <p class="lede">V1 refinado: <strong>.co</strong> pegado al wordmark, sin gap. Plus las variantes que vas a necesitar.</p>
+
+    <h2>Logo principal (refinado)</h2>
+    <div class="card">
+      <div class="grid">
+        <div>
+          <span class="ctx-label">Fondo blanco — landing/marketing</span>
+          <div class="ctx ctx-light"><img src="v1-spine-mark.svg" alt="primary"></div>
+        </div>
+        <div>
+          <span class="ctx-label">Fondo crema — surface del CRM</span>
+          <div class="ctx ctx-cream"><img src="v1-spine-mark.svg" alt="cream"></div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Versión light (para fondos oscuros)</h2>
+    <div class="card">
+      <div class="grid">
+        <div>
+          <span class="ctx-label">Sidebar dark del CRM</span>
+          <div class="ctx ctx-dark"><img src="v1-light.svg" alt="dark"></div>
+        </div>
+        <div>
+          <span class="ctx-label">Sobre color de marca</span>
+          <div class="ctx ctx-color"><img src="v1-light.svg" alt="color"></div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Solo símbolo (avatar, app icon, redes)</h2>
+    <div class="card">
+      <div class="grid">
+        <div>
+          <span class="ctx-label">Tamaño 64px</span>
+          <div class="ctx ctx-light scale-64"><img src="v1-icon-only.svg" alt="icon 64"></div>
+        </div>
+        <div>
+          <span class="ctx-label">Tamaño 32px (botón)</span>
+          <div class="ctx ctx-light scale-32"><img src="v1-icon-only.svg" alt="icon 32"></div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Favicon (32px en pestaña del navegador)</h2>
+    <div class="card">
+      <div class="favicon-row">
+        <div class="favicon-tab"><img src="v1-favicon.svg" alt="fav"><span>chiropract.co — Salud espinal de p...</span></div>
+        <div class="favicon-tab"><img src="v1-favicon.svg" alt="fav"><span>CRM</span></div>
+        <div class="favicon-tab"><img src="v1-favicon.svg" alt="fav"><span>Bot &amp; jornadas</span></div>
+      </div>
+    </div>
+
+    <h2>En contexto real</h2>
+    <div class="card">
+      <span class="ctx-label">Navbar de la landing</span>
+      <div class="nav-mock">
+        <img src="v1-spine-mark.svg" alt="navbar">
+        <div class="nav-links">
+          <span>Servicios</span><span>Jornadas</span><span>Dr. Díaz</span><span>Contacto</span>
+        </div>
+      </div>
+      <div style="margin-top: 16px"></div>
+      <span class="ctx-label">Sidebar del CRM</span>
+      <div class="sidebar-mock">
+        <img src="v1-icon-only.svg" alt="sidebar" style="filter: brightness(0) invert(1)">
+        <div>
+          <span>Quiropraxia Dr. Díaz</span><br>
+          <span style="font-size: 11px; opacity: 0.6">Powered by chiropract.co</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="vote">
+      <strong>¿Te gusta así?</strong> Dime <strong>"sí, dale"</strong> y avanzo aplicándolo a todo el sitio (favicon real, navbar, sidebar del CRM, footer, OG image). Si quieres seguir ajustando algo (tamaño del símbolo, color, espaciado, tipografía, etc), también dime.
+    </div>
+  </div>
+</body>
+</html>

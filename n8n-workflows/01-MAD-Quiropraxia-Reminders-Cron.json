@@ -1,0 +1,238 @@
+{
+  "name": "MAD-Quiropraxia - Reminders Cron",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cada 5 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/rpc/notification_jobs_due",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": false,
+        "options": {}
+      },
+      "id": "fetch-due-jobs",
+      "name": "Obtener notificaciones pendientes",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "notesInFlow": false,
+      "notes": "Llama RPC notification_jobs_due que retorna jobs con scheduled_for <= NOW() y status='scheduled'"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "split-jobs",
+      "name": "Split jobs",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://onwgfixvbyknotnbrkgr.supabase.co/rest/v1/notification_templates?tenant_id=eq.{{ $json.tenant_id }}&key=eq.{{ $json.template_key }}&channel=eq.whatsapp&active=eq.true&select=body,variables",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-template",
+      "name": "Obtener plantilla",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://onwgfixvbyknotnbrkgr.supabase.co/rest/v1/patients?id=eq.{{ $('Split jobs').item.json.patient_id }}&select=full_name,phone",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-patient",
+      "name": "Obtener paciente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Renderiza la plantilla reemplazando variables\nconst job = $('Split jobs').item.json;\nconst template = $('Obtener plantilla').item.json[0];\nconst patient = $('Obtener paciente').item.json[0];\n\nif (!template || !patient) {\n  return [{ json: { skip: true, reason: 'template or patient missing', job_id: job.id } }];\n}\n\nconst payload = job.payload || {};\nconst firstName = (patient.full_name || '').split(' ')[0] || 'Hola';\nconst phone = (patient.phone || '').replace(/\\D/g, '');\n\nif (!phone) {\n  return [{ json: { skip: true, reason: 'patient has no phone', job_id: job.id } }];\n}\n\nconst vars = {\n  patient_name: patient.full_name || '',\n  patient_first_name: firstName,\n  appointment_date: payload.date || '',\n  appointment_time: payload.time || '',\n  appointment_type: payload.type || 'consulta',\n  location: payload.location || 'consultorio',\n  doctor_name: 'Dr. Miguel Ángel Díaz',\n  clinic_name: 'chiropract.co',\n  jornada_city: payload.city || '',\n  jornada_date: payload.jornada_date || '',\n  available_slots: payload.available_slots || '',\n  receipt_url: payload.receipt_url || '',\n  payment_url: payload.payment_url || '',\n  sale_total: payload.sale_total || '',\n  items_summary: payload.items_summary || '',\n};\n\nlet body = template.body;\nfor (const [k, v] of Object.entries(vars)) {\n  body = body.replaceAll(`{{${k}}}`, String(v));\n}\n\nreturn [{\n  json: {\n    job_id: job.id,\n    tenant_id: job.tenant_id,\n    patient_id: job.patient_id,\n    appointment_id: job.appointment_id,\n    phone,\n    rendered_body: body,\n    template_key: job.template_key,\n  }\n}];"
+      },
+      "id": "render-message",
+      "name": "Renderizar mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "skip-or-send",
+      "name": "¿Saltar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://ievoapi.inventagency.co/message/sendText/{{ $env.EVOLUTION_INSTANCE_NAME }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"57{{ $json.phone }}\",\n  \"text\": {{ JSON.stringify($json.rendered_body) }}\n}",
+        "options": {}
+      },
+      "id": "send-whatsapp",
+      "name": "Enviar WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://onwgfixvbyknotnbrkgr.supabase.co/rest/v1/notification_jobs?id=eq.{{ $('Renderizar mensaje').item.json.job_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"status\": \"sent\",\n  \"sent_at\": \"{{ $now.toISO() }}\",\n  \"attempts\": {{ ($('Split jobs').item.json.attempts || 0) + 1 }}\n}",
+        "options": {}
+      },
+      "id": "mark-sent",
+      "name": "Marcar como enviado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://onwgfixvbyknotnbrkgr.supabase.co/rest/v1/whatsapp_messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "resolution=merge-duplicates" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"tenant_id\": \"{{ $('Renderizar mensaje').item.json.tenant_id }}\",\n  \"conversation_id\": \"{{ $('Upsert conversation').item.json[0].id }}\",\n  \"direction\": \"outbound\",\n  \"role\": \"assistant\",\n  \"content\": {{ JSON.stringify($('Renderizar mensaje').item.json.rendered_body) }},\n  \"template_key\": \"{{ $('Renderizar mensaje').item.json.template_key }}\",\n  \"related_appointment_id\": \"{{ $('Renderizar mensaje').item.json.appointment_id }}\",\n  \"status\": \"sent\"\n}",
+        "options": {}
+      },
+      "id": "log-message",
+      "name": "Loggear mensaje",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2220, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://onwgfixvbyknotnbrkgr.supabase.co/rest/v1/whatsapp_conversations",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "resolution=merge-duplicates,return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"tenant_id\": \"{{ $('Renderizar mensaje').item.json.tenant_id }}\",\n  \"patient_id\": \"{{ $('Renderizar mensaje').item.json.patient_id }}\",\n  \"phone\": \"{{ $('Renderizar mensaje').item.json.phone }}\",\n  \"evolution_instance_id\": \"{{ $env.EVOLUTION_INSTANCE_ID }}\",\n  \"state\": \"active\"\n}",
+        "options": {}
+      },
+      "id": "upsert-conversation",
+      "name": "Upsert conversation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 380]
+    }
+  ],
+  "connections": {
+    "Cada 5 minutos": { "main": [[{ "node": "Obtener notificaciones pendientes", "type": "main", "index": 0 }]] },
+    "Obtener notificaciones pendientes": { "main": [[{ "node": "Split jobs", "type": "main", "index": 0 }]] },
+    "Split jobs": { "main": [[{ "node": "Obtener plantilla", "type": "main", "index": 0 }]] },
+    "Obtener plantilla": { "main": [[{ "node": "Obtener paciente", "type": "main", "index": 0 }]] },
+    "Obtener paciente": { "main": [[{ "node": "Renderizar mensaje", "type": "main", "index": 0 }]] },
+    "Renderizar mensaje": { "main": [[{ "node": "¿Saltar?", "type": "main", "index": 0 }]] },
+    "¿Saltar?": { "main": [[], [{ "node": "Upsert conversation", "type": "main", "index": 0 }]] },
+    "Upsert conversation": { "main": [[{ "node": "Enviar WhatsApp", "type": "main", "index": 0 }]] },
+    "Enviar WhatsApp": { "main": [[{ "node": "Marcar como enviado", "type": "main", "index": 0 }]] },
+    "Marcar como enviado": { "main": [[{ "node": "Loggear mensaje", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "America/Bogota" },
+  "tags": [{ "name": "MAD-Quiropraxia" }]
+}

@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>chiropract.co — Presentación de Entregables</title>
+<meta name="description" content="Ecosistema digital de salud espinal — consolidado completo de entregables. CRM, Panel del Paciente, Historia Clínica, Facturación DIAN, Bot WhatsApp y más." />
+<meta name="robots" content="noindex" />
+<meta property="og:title" content="chiropract.co — Ecosistema completo" />
+<meta property="og:description" content="De un consultorio a una plataforma. Todos los entregables en un solo lugar." />
+<style>
+  :root{
+    --teal:#0f766e; --teal-d:#005c55; --teal-dd:#04342c;
+    --teal-l:#e1f5ee; --teal-l2:#c9efe2; --mint:#5dcaa5;
+    --ink:#14201d; --ink-2:#4b5a56; --muted:#7c8b86;
+    --bg:#ffffff; --bg-2:#f6faf8; --line:#e2ece8;
+    --radius:16px; --shadow:0 1px 3px rgba(4,52,44,.06),0 8px 24px rgba(4,52,44,.05);
+    --maxw:1080px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  h1,h2,h3{line-height:1.15;letter-spacing:-.01em}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;gap:20px;height:60px;max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;color:var(--teal-dd)}
+  .brand svg{width:26px;height:30px;flex:none}
+  .nav-links{display:flex;gap:22px;margin-left:auto;font-size:13.5px;font-weight:600;color:var(--ink-2)}
+  .nav-links a:hover{color:var(--teal)}
+  @media(max-width:820px){.nav-links{display:none}}
+
+  /* HERO */
+  header.hero{background:radial-gradient(1200px 400px at 50% -80px,var(--teal-l),transparent),var(--bg);padding:72px 0 56px;text-align:center;border-bottom:1px solid var(--line)}
+  .kicker{display:inline-block;font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--teal);background:var(--teal-l);padding:6px 14px;border-radius:999px;margin-bottom:22px}
+  header.hero h1{font-size:clamp(32px,6vw,54px);font-weight:900;color:var(--teal-dd);max-width:14ch;margin:0 auto 18px}
+  header.hero p.sub{font-size:clamp(16px,2.4vw,20px);color:var(--ink-2);max-width:56ch;margin:0 auto 30px}
+  .badges{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  .badge{font-size:13px;font-weight:700;padding:8px 15px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--ink-2)}
+  .badge b{color:var(--teal)}
+
+  section{padding:60px 0;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--mint);text-transform:uppercase;margin-bottom:10px}
+  .sec-title{font-size:clamp(24px,4vw,34px);font-weight:800;color:var(--teal-dd);margin-bottom:14px}
+  .sec-lead{font-size:16.5px;color:var(--ink-2);max-width:64ch;margin-bottom:34px}
+
+  /* GRID CARDS */
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:900px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .card{background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);transition:transform .2s ease,box-shadow .2s ease}
+  .card:hover{transform:translateY(-3px);box-shadow:0 4px 10px rgba(4,52,44,.08),0 18px 40px rgba(4,52,44,.09)}
+  .card .ico{font-size:26px;margin-bottom:12px;display:block}
+  .card h3{font-size:17px;font-weight:800;color:var(--teal-dd);margin-bottom:6px}
+  .card p{font-size:14px;color:var(--ink-2)}
+  .card ul{list-style:none;margin-top:8px;font-size:13.5px;color:var(--ink-2)}
+  .card ul li{padding:3px 0 3px 18px;position:relative}
+  .card ul li::before{content:"";position:absolute;left:2px;top:11px;width:6px;height:6px;border-radius:50%;background:var(--mint)}
+
+  /* problema/solucion */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:700px){.split{grid-template-columns:1fr}}
+  .panel{border-radius:var(--radius);padding:26px}
+  .panel.bad{background:#fdf2f0;border:1px solid #f6d4cd}
+  .panel.good{background:var(--teal-l);border:1px solid var(--teal-l2)}
+  .panel h4{font-size:14px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:14px}
+  .panel.bad h4{color:#b23c22}.panel.good h4{color:var(--teal-d)}
+  .panel ul{list-style:none;font-size:14.5px}
+  .panel ul li{padding:6px 0 6px 24px;position:relative;color:var(--ink)}
+  .panel.bad li::before{content:"✕";position:absolute;left:0;color:#c65a3f;font-weight:700}
+  .panel.good li::before{content:"✓";position:absolute;left:0;color:var(--teal);font-weight:800}
+
+  /* ecosistema svg */
+  .eco{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);padding:20px;overflow:auto}
+  .eco svg{width:100%;height:auto;min-width:680px}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+  @media(max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--teal-dd);color:#fff;border-radius:var(--radius);padding:22px 16px;text-align:center}
+  .stat .n{font-size:34px;font-weight:900;color:#fff;line-height:1}
+  .stat .l{font-size:12.5px;color:var(--teal-l2);margin-top:8px;font-weight:600}
+
+  /* status list */
+  .status{display:grid;gap:10px}
+  .st-row{display:flex;align-items:center;gap:14px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+  .st-row .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .st-row .dot.on{background:var(--mint);box-shadow:0 0 0 4px var(--teal-l)}
+  .st-row .dot.pend{background:#e6a532;box-shadow:0 0 0 4px #fdf0d8}
+  .st-row .t{font-weight:700;font-size:14.5px}
+  .st-row .s{margin-left:auto;font-size:12.5px;font-weight:700;padding:4px 12px;border-radius:999px}
+  .s.ok{background:var(--teal-l);color:var(--teal-d)} .s.wait{background:#fdf0d8;color:#a9741a}
+
+  /* roadmap */
+  .rm{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:800px){.rm{grid-template-columns:1fr}}
+  .rm .col{border:1px solid var(--line);border-radius:var(--radius);padding:20px;background:var(--bg)}
+  .rm .col h4{font-size:14px;font-weight:800;color:var(--teal);margin-bottom:12px}
+  .rm .col ol{list-style:none;counter-reset:s}
+  .rm .col li{counter-increment:s;padding:8px 0 8px 30px;position:relative;font-size:14px;color:var(--ink-2);border-top:1px dashed var(--line)}
+  .rm .col li:first-child{border-top:0}
+  .rm .col li::before{content:counter(s);position:absolute;left:0;top:7px;width:20px;height:20px;border-radius:50%;background:var(--teal-l);color:var(--teal-d);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+
+  footer{background:var(--teal-dd);color:#cfe9e0;text-align:center;padding:50px 24px}
+  footer .fbrand{display:flex;align-items:center;gap:10px;justify-content:center;font-weight:800;font-size:20px;color:#fff;margin-bottom:10px}
+  footer .fbrand svg{width:26px;height:30px}
+  footer p{font-size:14px;max-width:52ch;margin:0 auto}
+  footer .tagline{font-style:italic;margin-top:14px;color:var(--mint)}
+
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- logo reusable -->
+<svg width="0" height="0" style="position:absolute"><defs>
+  <linearGradient id="gi" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0f766e"/><stop offset="1" stop-color="#005c55"/></linearGradient>
+  <symbol id="logo" viewBox="0 0 64 64">
+    <rect x="4" y="0" width="56" height="64" rx="8" fill="none" stroke="#0f766e" stroke-width="3"/>
+    <path d="M32 10 Q42 12 40 18 Q38 22 32 22 Q26 22 24 18 Q22 12 32 10Z" fill="url(#gi)"/>
+    <path d="M32 22 Q22 24 24 30 Q26 34 32 34 Q38 34 40 30 Q42 24 32 22Z" fill="url(#gi)"/>
+    <path d="M32 34 Q42 36 40 42 Q38 46 32 46 Q26 46 24 42 Q22 36 32 34Z" fill="url(#gi)"/>
+    <path d="M32 46 Q22 48 24 54 Q26 58 32 58 Q38 58 40 54 Q42 48 32 46Z" fill="url(#gi)"/>
+  </symbol>
+</defs></svg>
+
+<nav>
+  <div class="nav-in">
+    <a class="brand" href="#top"><svg><use href="#logo"/></svg>chiropract.co</a>
+    <div class="nav-links">
+      <a href="#producto">Producto</a>
+      <a href="#marca">Marca</a>
+      <a href="#marketing">Marketing</a>
+      <a href="#estrategia">Estrategia</a>
+      <a href="#numeros">Números</a>
+      <a href="#roadmap">Próximos pasos</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="kicker">PRESENTACIÓN DE ENTREGABLES</span>
+    <h1>El primer ecosistema digital de salud espinal en Colombia</h1>
+    <p class="sub">De un consultorio a una plataforma. CRM, Panel del Paciente, Historia Clínica, Facturación DIAN, Bot de WhatsApp y marketing — todo integrado y en producción.</p>
+    <div class="badges">
+      <span class="badge"><b>6 de 6</b> fases entregadas</span>
+      <span class="badge"><b>12</b> Edge Functions</span>
+      <span class="badge"><b>7</b> integraciones</span>
+      <span class="badge"><b>En producción</b></span>
+    </div>
+  </div>
+</header>
+
+<!-- PROBLEMA / SOLUCION -->
+<section id="resumen">
+  <div class="wrap reveal">
+    <div class="eyebrow">El punto de partida</div>
+    <h2 class="sec-title">Lo que resolvimos</h2>
+    <div class="split">
+      <div class="panel bad">
+        <h4>Antes</h4>
+        <ul>
+          <li>Pacientes en Excel + WhatsApp manual + cuaderno</li>
+          <li>Sin historia clínica digital</li>
+          <li>Sin cobro en línea ni facturación DIAN</li>
+          <li>Recepción saturada respondiendo mensajes</li>
+          <li>Jornadas en pueblos sin sistema</li>
+          <li>Marketing sin medición</li>
+        </ul>
+      </div>
+      <div class="panel good">
+        <h4>Ahora</h4>
+        <ul>
+          <li>Ecosistema digital completo, en producción</li>
+          <li>Historia clínica con SOAP + diagramas + RX</li>
+          <li>Pagos Wompi + factura electrónica DIAN</li>
+          <li>Bot de WhatsApp con IA que atiende solo</li>
+          <li>Panel del paciente + jornadas reservables</li>
+          <li>Marketing con datos reales y audiencias</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ECOSISTEMA -->
+<section id="ecosistema">
+  <div class="wrap reveal">
+    <div class="eyebrow">Vista general</div>
+    <h2 class="sec-title">El ecosistema completo</h2>
+    <p class="sec-lead">Todo lo entregado, en una sola vista: quién lo usa, qué incluye, con qué se conecta y sobre qué corre.</p>
+    <div class="eco">
+      <svg viewBox="0 0 1000 470" xmlns="http://www.w3.org/2000/svg" font-family="Inter,sans-serif">
+        <text x="0" y="14" font-size="10.5" font-weight="700" letter-spacing="1" fill="#7c8b86">QUIÉN LO USA</text>
+        <g font-size="13" font-weight="600">
+          <rect x="0" y="22" width="322" height="42" rx="10" fill="#fff" stroke="#b4b2a9"/><text x="161" y="48" text-anchor="middle" fill="#14201d">🧑 Paciente</text>
+          <rect x="339" y="22" width="322" height="42" rx="10" fill="#fff" stroke="#b4b2a9"/><text x="500" y="48" text-anchor="middle" fill="#14201d">👨‍⚕️ Doctor y equipo</text>
+          <rect x="678" y="22" width="322" height="42" rx="10" fill="#fff" stroke="#b4b2a9"/><text x="839" y="48" text-anchor="middle" fill="#14201d">🌐 Visitante web</text>
+        </g>
+        <text x="0" y="98" font-size="10.5" font-weight="700" letter-spacing="1" fill="#7c8b86">QUÉ INCLUYE — EL PRODUCTO</text>
+        <g font-size="12.5" font-weight="700" fill="#fff">
+          <rect x="0" y="106" width="158" height="70" rx="12" fill="#0f766e"/><text x="79" y="138" text-anchor="middle">CRM</text><text x="79" y="156" text-anchor="middle" font-size="9.5" font-weight="500" fill="#c9efe2">7 módulos</text>
+          <rect x="168" y="106" width="158" height="70" rx="12" fill="#0f766e"/><text x="247" y="133" text-anchor="middle">Panel Paciente</text><text x="247" y="150" text-anchor="middle" font-size="9.5" font-weight="500" fill="#c9efe2">login WhatsApp</text>
+          <rect x="336" y="106" width="158" height="70" rx="12" fill="#0f766e"/><text x="415" y="133" text-anchor="middle">Historia Clínica</text><text x="415" y="150" text-anchor="middle" font-size="9.5" font-weight="500" fill="#c9efe2">SOAP + RX</text>
+          <rect x="504" y="106" width="158" height="70" rx="12" fill="#0f766e"/><text x="583" y="133" text-anchor="middle">Facturación DIAN</text><text x="583" y="150" text-anchor="middle" font-size="9.5" font-weight="500" fill="#c9efe2">vía Alegra</text>
+          <rect x="672" y="106" width="158" height="70" rx="12" fill="#0f766e"/><text x="751" y="133" text-anchor="middle">Bot WhatsApp IA</text><text x="751" y="150" text-anchor="middle" font-size="9.5" font-weight="500" fill="#c9efe2">GPT-4o + audio</text>
+          <rect x="840" y="106" width="160" height="70" rx="12" fill="#0f766e"/><text x="920" y="138" text-anchor="middle">Modo SaaS</text><text x="920" y="156" text-anchor="middle" font-size="9.5" font-weight="500" fill="#c9efe2">planes + cobro</text>
+        </g>
+        <text x="0" y="210" font-size="10.5" font-weight="700" letter-spacing="1" fill="#7c8b86">SE CONECTA CON</text>
+        <g font-size="12" font-weight="600" fill="#085041">
+          <rect x="0" y="218" width="190" height="40" rx="9" fill="#e1f5ee"/><text x="95" y="243" text-anchor="middle">🟢 WhatsApp</text>
+          <rect x="202" y="218" width="190" height="40" rx="9" fill="#e1f5ee"/><text x="297" y="243" text-anchor="middle">💳 Wompi</text>
+          <rect x="404" y="218" width="192" height="40" rx="9" fill="#e1f5ee"/><text x="500" y="243" text-anchor="middle">🧾 Alegra DIAN</text>
+          <rect x="608" y="218" width="190" height="40" rx="9" fill="#e1f5ee"/><text x="703" y="243" text-anchor="middle">🧠 OpenAI</text>
+          <rect x="810" y="218" width="190" height="40" rx="9" fill="#e1f5ee"/><text x="905" y="243" text-anchor="middle">📊 Meta Ads</text>
+        </g>
+        <text x="0" y="292" font-size="10.5" font-weight="700" letter-spacing="1" fill="#7c8b86">CORRE SOBRE</text>
+        <g font-size="12" font-weight="600" fill="#14201d">
+          <rect x="0" y="300" width="322" height="38" rx="9" fill="#fff" stroke="#d3d1c7"/><text x="161" y="324" text-anchor="middle">🗄️ Supabase</text>
+          <rect x="339" y="300" width="322" height="38" rx="9" fill="#fff" stroke="#d3d1c7"/><text x="500" y="324" text-anchor="middle">▲ Vercel</text>
+          <rect x="678" y="300" width="322" height="38" rx="9" fill="#fff" stroke="#d3d1c7"/><text x="839" y="324" text-anchor="middle">⚙️ n8n</text>
+        </g>
+        <line x1="0" y1="366" x2="1000" y2="366" stroke="#d3d1c7"/>
+        <text x="0" y="392" font-size="10.5" font-weight="700" letter-spacing="1" fill="#7c8b86">ADEMÁS DEL SOFTWARE</text>
+        <g font-size="13" font-weight="700" fill="#0f766e">
+          <rect x="0" y="400" width="322" height="58" rx="12" fill="#fff" stroke="#5dcaa5" stroke-width="1.5"/><text x="18" y="426">🎨 Marca</text><text x="18" y="446" font-size="11" font-weight="500" fill="#4b5a56">Logo · 13 fotos pro · sistema visual</text>
+          <rect x="339" y="400" width="322" height="58" rx="12" fill="#fff" stroke="#5dcaa5" stroke-width="1.5"/><text x="357" y="426">📣 Marketing</text><text x="357" y="446" font-size="11" font-weight="500" fill="#4b5a56">Creativos · auditoría 64 ads · plan</text>
+          <rect x="678" y="400" width="322" height="58" rx="12" fill="#fff" stroke="#5dcaa5" stroke-width="1.5"/><text x="696" y="426">🧭 Estrategia</text><text x="696" y="446" font-size="11" font-weight="500" fill="#4b5a56">Diferenciales · hoja de ruta</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCTO -->
+<section id="producto">
+  <div class="wrap reveal">
+    <div class="eyebrow">Área 1</div>
+    <h2 class="sec-title">Producto · El software</h2>
+    <p class="sec-lead">Un sistema en producción real, usado a diario con pacientes. Tres paneles, siete módulos, doce funciones serverless.</p>
+    <div class="grid g3">
+      <div class="card"><span class="ico">🖥️</span><h3>CRM del doctor</h3><p>7 módulos de gestión.</p><ul><li>Dashboard + alertas</li><li>Pacientes + ficha completa</li><li>Citas multi-doctor</li><li>Jornadas itinerantes</li><li>Productos, ventas y finanzas</li></ul></div>
+      <div class="card"><span class="ico">📱</span><h3>Panel del Paciente</h3><p>Acceso propio, sin apps.</p><ul><li>Login por código WhatsApp</li><li>Cancelar / reagendar citas</li><li>Recibos y pagos en línea</li><li>Reservar cupo en jornadas</li><li>Ver su historia clínica</li></ul></div>
+      <div class="card"><span class="ico">🩺</span><h3>Historia Clínica</h3><p>Nivel profesional.</p><ul><li>Notas SOAP estructuradas</li><li>Diagrama corporal de dolor</li><li>Signos vitales + CIE-10</li><li>Archivos: RX, exámenes</li><li>Encriptada y con respaldo legal</li></ul></div>
+      <div class="card"><span class="ico">🧾</span><h3>Facturación DIAN</h3><p>Cumplimiento fiscal.</p><ul><li>Integración con Alegra</li><li>Factura electrónica en 1 clic</li><li>CUFE + PDF + XML</li><li>El paciente descarga su factura</li></ul></div>
+      <div class="card"><span class="ico">🤖</span><h3>Bot WhatsApp con IA</h3><p>Atiende solo, 24/7.</p><ul><li>GPT-4o: agenda y responde</li><li>Entiende texto y audios</li><li>Conectado a la base real</li><li>Notifica al doctor</li></ul></div>
+      <div class="card"><span class="ico">💼</span><h3>Modo SaaS + PWA</h3><p>Escalable y móvil.</p><ul><li>Planes Básico / Pro / Enterprise</li><li>Cobro automático Wompi</li><li>App instalable en el celular</li><li>Funciona sin internet</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- MARCA + INTEGRACIONES -->
+<section id="marca">
+  <div class="wrap reveal">
+    <div class="eyebrow">Áreas 2 y 3</div>
+    <h2 class="sec-title">Marca e Integraciones</h2>
+    <div class="grid g2">
+      <div class="card"><span class="ico">🎨</span><h3>Identidad de marca</h3><ul><li>Logo desde cero — 4 variantes SVG</li><li>Paleta teal médico + tipografía Inter</li><li>13 fotos profesionales del Dr. Miguel (IA)</li><li>Íconos de app en todos los tamaños</li><li>Guía de marca: tono y vocabulario</li></ul></div>
+      <div class="card"><span class="ico">🔌</span><h3>7 integraciones conectadas</h3><ul><li>Evolution API (WhatsApp)</li><li>OpenAI GPT-4o + Whisper</li><li>Wompi — pagos (tarjeta, PSE, Nequi)</li><li>Alegra — facturación DIAN</li><li>n8n · FAL.ai · Meta Ads API</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- MARKETING -->
+<section id="marketing">
+  <div class="wrap reveal">
+    <div class="eyebrow">Área 4</div>
+    <h2 class="sec-title">Marketing & Publicidad</h2>
+    <p class="sec-lead">Biblioteca de creativos organizada + auditoría directa de la cuenta de Meta con hallazgos accionables.</p>
+    <div class="grid g3">
+      <div class="card"><span class="ico">🗂️</span><h3>Biblioteca de creativos</h3><ul><li>Captación Bogotá (v1 + v2)</li><li>Posicionamiento Jornadas</li><li>Educativo / Engagement</li><li>Carruseles + Stories orgánicos</li><li>Briefs de video para producción</li></ul></div>
+      <div class="card"><span class="ico">🔎</span><h3>Auditoría de la cuenta</h3><ul><li>64 anuncios analizados</li><li>Cliente: mujer 55+, Bogotá</li><li>Facebook = 98.6% de resultados</li><li>Ganadores: "evita cirugía", testimonio</li><li>Diagnóstico de medición (CAC/ROAS)</li></ul></div>
+      <div class="card"><span class="ico">🎯</span><h3>Plan de campaña</h3><ul><li>2 audiencias creadas (lookalike)</li><li>Objetivo correcto: Mensajes WhatsApp</li><li>Segmentación por datos reales</li><li>Espacio para 4 videos del doctor</li><li>Semilla lookalike = pacientes del CRM</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- ESTRATEGIA -->
+<section id="estrategia">
+  <div class="wrap reveal">
+    <div class="eyebrow">Área 5</div>
+    <h2 class="sec-title">Estrategia & Visión</h2>
+    <div class="grid g2">
+      <div class="card"><span class="ico">🛡️</span><h3>Diferenciales de mercado</h3><ul><li>Localización Colombia: WhatsApp + DIAN + pesos</li><li>Founder-doctor con 500 pacientes reales</li><li>Modelo de jornadas rurales único</li></ul></div>
+      <div class="card"><span class="ico">🚀</span><h3>El siguiente nivel</h3><ul><li>AI Scribe — el doctor habla, la IA escribe la nota</li><li>RIPS + IHCE — compliance colombiano automático</li><li>Network OS — red de consultorios + fintech</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- NUMEROS -->
+<section id="numeros">
+  <div class="wrap reveal">
+    <div class="eyebrow">El proyecto en números</div>
+    <h2 class="sec-title">Escala de lo entregado</h2>
+    <div class="stats">
+      <div class="stat"><div class="n">7</div><div class="l">Módulos CRM</div></div>
+      <div class="stat"><div class="n">3</div><div class="l">Paneles</div></div>
+      <div class="stat"><div class="n">12</div><div class="l">Edge Functions</div></div>
+      <div class="stat"><div class="n">7</div><div class="l">Integraciones</div></div>
+      <div class="stat"><div class="n">13</div><div class="l">Fotos del doctor</div></div>
+      <div class="stat"><div class="n">6/6</div><div class="l">Fases entregadas</div></div>
+      <div class="stat"><div class="n">64</div><div class="l">Anuncios auditados</div></div>
+      <div class="stat"><div class="n">5</div><div class="l">Categorías creativos</div></div>
+      <div class="stat"><div class="n">7</div><div class="l">Docs maestros</div></div>
+      <div class="stat"><div class="n">4</div><div class="l">Variantes de logo</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCCION -->
+<section>
+  <div class="wrap reveal">
+    <div class="eyebrow">Dónde está hoy</div>
+    <h2 class="sec-title">Estado de producción</h2>
+    <div class="status">
+      <div class="st-row"><span class="dot on"></span><span class="t">🌐 Sitio + CRM + Panel del paciente</span><span class="s ok">Desplegado</span></div>
+      <div class="st-row"><span class="dot on"></span><span class="t">🗄️ Base de datos + Edge Functions</span><span class="s ok">En producción</span></div>
+      <div class="st-row"><span class="dot on"></span><span class="t">💻 Código fuente (GitHub)</span><span class="s ok">Versionado</span></div>
+      <div class="st-row"><span class="dot on"></span><span class="t">🤖 Bot WhatsApp (n8n + Evolution)</span><span class="s ok">Operativo</span></div>
+      <div class="st-row"><span class="dot on"></span><span class="t">💳 Pagos Wompi (llaves reales)</span><span class="s ok">Producción</span></div>
+      <div class="st-row"><span class="dot on"></span><span class="t">📊 Meta Ads conectado y auditado</span><span class="s ok">Listo</span></div>
+      <div class="st-row"><span class="dot pend"></span><span class="t">🌍 Dominio chiropract.co</span><span class="s wait">Conectar DNS</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="wrap reveal">
+    <div class="eyebrow">Área 6 · Hacia adelante</div>
+    <h2 class="sec-title">Próximos pasos</h2>
+    <div class="rm">
+      <div class="col"><h4>Esta semana</h4><ol><li>Conectar dominio chiropract.co</li><li>Liquidar cuenta Meta → historial + ROAS real</li><li>Grabar los 4 videos del doctor</li></ol></div>
+      <div class="col"><h4>Este mes</h4><ol><li>Lanzar campaña de Mensajes optimizada</li><li>Cerrar loop de medición ads → CRM</li><li>Construir el AI Scribe</li></ol></div>
+      <div class="col"><h4>3–6 meses</h4><ol><li>Módulo RIPS + IHCE (compliance)</li><li>Abrir el SaaS a otros consultorios</li><li>Red de salud espinal en Colombia</li></ol></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="fbrand"><svg><use href="#logo"/></svg>chiropract.co</div>
+  <p>De un consultorio a una plataforma. Un producto que el doctor usa todos los días, una marca sólida, un motor de marketing con datos reales y una visión de escala clara.</p>
+  <p class="tagline">El método Díaz, digitalizado y listo para escalar.</p>
+</footer>
+
+<script>
+  const obs=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target)}})},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>

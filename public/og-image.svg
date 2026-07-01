@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="og-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#005c55"/>
+      <stop offset="100%" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="og-spine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9cf2e8"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+    <radialGradient id="og-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9cf2e8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#9cf2e8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#og-bg)"/>
+
+  <!-- Glow circles for depth -->
+  <circle cx="900" cy="100" r="300" fill="url(#og-glow)"/>
+  <circle cx="200" cy="500" r="250" fill="url(#og-glow)" opacity="0.5"/>
+
+  <!-- Logo: spine en marco, tamaño grande -->
+  <g transform="translate(80 195)">
+    <rect x="0" y="0" width="240" height="270" rx="24" fill="none" stroke="#ffffff" stroke-width="8"/>
+    <path d="M 120 38 Q 162 46 156 70 Q 148 88 120 88 Q 92 88 84 70 Q 78 46 120 38 Z" fill="url(#og-spine)"/>
+    <path d="M 120 88 Q 78 96 84 120 Q 92 138 120 138 Q 148 138 156 120 Q 162 96 120 88 Z" fill="url(#og-spine)"/>
+    <path d="M 120 138 Q 162 146 156 170 Q 148 188 120 188 Q 92 188 84 170 Q 78 146 120 138 Z" fill="url(#og-spine)"/>
+    <path d="M 120 188 Q 78 196 84 220 Q 92 238 120 238 Q 148 238 156 220 Q 162 196 120 188 Z" fill="url(#og-spine)"/>
+  </g>
+
+  <!-- Main text -->
+  <text x="380" y="280" font-family="'Inter', -apple-system, system-ui, sans-serif" font-weight="800" font-size="100" fill="#ffffff" letter-spacing="-3">
+    chiropract<tspan fill="#9cf2e8" font-weight="500">.co</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="380" y="350" font-family="'Inter', -apple-system, system-ui, sans-serif" font-weight="500" font-size="36" fill="#ffffff" opacity="0.9">
+    Salud espinal de precisión.
+  </text>
+
+  <!-- Subtitle -->
+  <text x="380" y="395" font-family="'Inter', -apple-system, system-ui, sans-serif" font-weight="400" font-size="24" fill="#ffffff" opacity="0.7">
+    Quiropraxia · Ortopedia · Fisioterapia integradas
+  </text>
+
+  <!-- Bottom accent: cities -->
+  <text x="380" y="490" font-family="'Inter', -apple-system, system-ui, sans-serif" font-weight="700" font-size="14" fill="#9cf2e8" letter-spacing="3">
+    BOGOTÁ
+  </text>
+  <text x="490" y="490" font-family="'Inter', -apple-system, system-ui, sans-serif" font-weight="500" font-size="14" fill="#ffffff" opacity="0.6" letter-spacing="3">
+    · SOATÁ · GUAMAL · MUZO · GARCÉS NAVAS
+  </text>
+
+  <!-- Doctor name footer -->
+  <text x="380" y="540" font-family="'Inter', -apple-system, system-ui, sans-serif" font-style="italic" font-weight="400" font-size="18" fill="#ffffff" opacity="0.6">
+    Dr. Miguel Ángel Díaz · 15 años de experiencia clínica
+  </text>
+</svg>

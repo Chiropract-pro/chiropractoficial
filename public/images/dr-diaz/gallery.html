@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dr. Díaz — galería generada con LoRA</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, system-ui, sans-serif; margin: 0; background: #f2f3ff; color: #131b2e; padding: 32px 20px; }
+  .container { max-width: 1280px; margin: 0 auto; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -1px; }
+  .lede { color: #3e4947; font-size: 15px; margin: 0 0 28px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #dae2fd; }
+  .card img { width: 100%; height: 320px; object-fit: cover; display: block; }
+  .card .meta { padding: 12px 14px; font-size: 12px; color: #3e4947; }
+  .card .meta strong { display: block; color: #131b2e; font-size: 13px; margin-bottom: 2px; }
+  .vote { margin-top: 24px; padding: 18px; background: linear-gradient(135deg, #005c55, #0f766e); color: white; border-radius: 12px; font-size: 14px; line-height: 1.6; }
+  .vote strong { color: #9cf2e8; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Dr. Miguel Ángel Díaz — galería</h1>
+    <p class="lede">12 fotos generadas con tu LoRA personalizado en FAL.ai. Mira cuáles te gustan y dime cuáles uso en cada sección.</p>
+
+    <div class="grid">
+      <div class="card"><img src="01-portrait-formal.jpg" alt=""><div class="meta"><strong>01 · Retrato formal</strong>About / Hero</div></div>
+      <div class="card"><img src="02-examining-patient.jpg" alt=""><div class="meta"><strong>02 · Examinando paciente</strong>Services · ajuste</div></div>
+      <div class="card"><img src="03-jornada-rural.jpg" alt=""><div class="meta"><strong>03 · Jornada rural</strong>Section jornadas</div></div>
+      <div class="card"><img src="04-charla-educativa.jpg" alt=""><div class="meta"><strong>04 · Charla educativa</strong>Blog / Testimonials</div></div>
+      <div class="card"><img src="05-casual-smile.jpg" alt=""><div class="meta"><strong>05 · Sonrisa casual</strong>WhatsApp / redes</div></div>
+      <div class="card"><img src="06-instruments-diagnostic.jpg" alt=""><div class="meta"><strong>06 · Diagnóstico (X-ray)</strong>Services · evaluación</div></div>
+      <div class="card"><img src="07-portrait-hero.jpg" alt=""><div class="meta"><strong>07 · Retrato hero</strong>Hero principal</div></div>
+      <div class="card"><img src="08-with-patient-talking.jpg" alt=""><div class="meta"><strong>08 · Consultando</strong>Services · primera consulta</div></div>
+      <div class="card"><img src="09-walking-clinic.jpg" alt=""><div class="meta"><strong>09 · Caminando consultorio</strong>About lifestyle</div></div>
+      <div class="card"><img src="10-jornada-arrival.jpg" alt=""><div class="meta"><strong>10 · Llegada a jornada</strong>Storytelling jornadas</div></div>
+      <div class="card"><img src="11-team-thumbnail.jpg" alt=""><div class="meta"><strong>11 · Headshot studio</strong>Team / footer</div></div>
+      <div class="card"><img src="12-checking-posture.jpg" alt=""><div class="meta"><strong>12 · Postura</strong>Services · postural</div></div>
+    </div>
+
+    <div class="vote">
+      <strong>¿Cómo se ven?</strong> Si todas son aprobadas, las integro a sus secciones. Si alguna no te convence, regenero esa específica con prompt ajustado. Si quieres más variaciones de alguna, también dime.
+    </div>
+  </div>
+</body>
+</html>

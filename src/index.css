@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #005c55;
+  --color-primary-light: #0f766e;
+  --color-primary-container: #0f766e;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #a3faef;
+  --color-primary-fixed: #9cf2e8;
+  --color-primary-fixed-dim: #80d5cb;
+  --color-secondary: #006b5f;
+  --color-secondary-container: #6df5e1;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #006f64;
+  --color-secondary-fixed: #71f8e4;
+  --color-secondary-fixed-dim: #4fdbc8;
+  --color-tertiary: #734700;
+  --color-tertiary-container: #945d00;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #ffe6cc;
+  --color-tertiary-fixed: #ffddb8;
+  --color-tertiary-fixed-dim: #ffb95f;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+  --color-background: #faf8ff;
+  --color-on-background: #131b2e;
+  --color-surface: #faf8ff;
+  --color-on-surface: #131b2e;
+  --color-on-surface-variant: #3e4947;
+  --color-surface-variant: #dae2fd;
+  --color-surface-dim: #d2d9f4;
+  --color-surface-bright: #faf8ff;
+  --color-surface-container: #eaedff;
+  --color-surface-container-high: #e2e7ff;
+  --color-surface-container-highest: #dae2fd;
+  --color-surface-container-low: #f2f3ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-inverse-surface: #283044;
+  --color-inverse-on-surface: #eef0ff;
+  --color-inverse-primary: #80d5cb;
+  --color-outline: #6e7977;
+  --color-outline-variant: #bdc9c6;
+  --color-sidebar: #0f172a;
+  --color-sidebar-hover: #1e293b;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 3px;
+}
+
+/* Clinical Sanctuary styles */
+.clinical-gradient {
+  background: linear-gradient(135deg, #005c55 0%, #0f766e 100%);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-nav {
+  background: rgba(250, 248, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.editorial-title {
+  letter-spacing: -0.02em;
+}
+
+.shadow-clinical {
+  box-shadow: 0 20px 40px rgba(19, 27, 46, 0.04);
+}
+
+.shadow-clinical-lg {
+  box-shadow: 0 20px 40px rgba(19, 27, 46, 0.06);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Form inputs (consistente entre módulos) */
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 0.5rem;
+  color: var(--color-on-surface);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(0, 92, 85, 0.1);
+}
+.input:disabled {
+  background: var(--color-surface-container-low);
+  cursor: not-allowed;
+}

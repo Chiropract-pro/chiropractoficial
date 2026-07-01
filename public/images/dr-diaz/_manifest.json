@@ -1,0 +1,78 @@
+{
+  "lora": "https://v3b.fal.media/files/b/0a983cf3/QShlwv20UzOfmjgUng2VL_pytorch_lora_weights.safetensors",
+  "generated_at": "2026-04-29T20:51:40.726Z",
+  "images": [
+    {
+      "name": "01-portrait-formal",
+      "url": "https://v3b.fal.media/files/b/0a983e46/Nv3G8k5lw9llNHx99anBu_255924a27c734d9e8c5954ff31d8f58f.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\01-portrait-formal.jpg",
+      "size": 141223
+    },
+    {
+      "name": "02-examining-patient",
+      "url": "https://v3b.fal.media/files/b/0a983e47/kgbUUxPHOmDcpQlkH98Uv_88b3b8724755491b95f4e9eb0c8ac932.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\02-examining-patient.jpg",
+      "size": 131467
+    },
+    {
+      "name": "03-jornada-rural",
+      "url": "https://v3b.fal.media/files/b/0a983e49/Ci85XJF_1CP5Q3aBp8alm_d155f7937b584241b5a30ab762b98793.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\03-jornada-rural.jpg",
+      "size": 163532
+    },
+    {
+      "name": "04-charla-educativa",
+      "url": "https://v3b.fal.media/files/b/0a983e4b/-op-xBUcmKuWfKAOkIXeY_faf20591ccfc4cbdb3f9b627ddc11e87.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\04-charla-educativa.jpg",
+      "size": 121490
+    },
+    {
+      "name": "05-casual-smile",
+      "url": "https://v3b.fal.media/files/b/0a983e4c/aa7bwog9Wr54rJirs4s2-_be0a20ed3d86446d93e1a3483e4d5825.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\05-casual-smile.jpg",
+      "size": 131881
+    },
+    {
+      "name": "06-instruments-diagnostic",
+      "url": "https://v3b.fal.media/files/b/0a983e4c/k0PkVHR-RBjQeAtem1fsX_9865e4d8b833400cbc7c6f0f5a44701b.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\06-instruments-diagnostic.jpg",
+      "size": 150546
+    },
+    {
+      "name": "07-portrait-hero",
+      "url": "https://v3b.fal.media/files/b/0a983e4d/hY5LVY1sM8eiB4b0fklWB_32843e6806394e16a12b542c347601a4.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\07-portrait-hero.jpg",
+      "size": 143971
+    },
+    {
+      "name": "08-with-patient-talking",
+      "url": "https://v3b.fal.media/files/b/0a983e4f/hMfGhudz13KVgPkKYyhu__eda34357759741ab921a5303ff88fa2f.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\08-with-patient-talking.jpg",
+      "size": 148097
+    },
+    {
+      "name": "09-walking-clinic",
+      "url": "https://v3b.fal.media/files/b/0a983e4f/rbFEYDN3Wt6jCpzfmcyPT_bacd53d63a354587be78cc691f42d609.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\09-walking-clinic.jpg",
+      "size": 133557
+    },
+    {
+      "name": "10-jornada-arrival",
+      "url": "https://v3b.fal.media/files/b/0a983e51/Np2aAd1ITuFCD8PKFJ4-p_781cc65ebc6247409d7a64120d7d1d40.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\10-jornada-arrival.jpg",
+      "size": 118986
+    },
+    {
+      "name": "11-team-thumbnail",
+      "url": "https://v3b.fal.media/files/b/0a983e52/hlG0cDgiKsI0inUI9rF8a_1b53f23eec2946e2943d3016b29edb11.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\11-team-thumbnail.jpg",
+      "size": 160454
+    },
+    {
+      "name": "12-checking-posture",
+      "url": "https://v3b.fal.media/files/b/0a983e55/aVrdK_6osmJsVz22KdSMj_164692d4f5a4495286b3dae722e8d2fe.jpg",
+      "file": "C:\\Users\\Sebastian\\Desktop\\MiguelAngelDiaz Quiropraxia\\crm-quiropraxia\\public\\images\\dr-diaz\\12-checking-posture.jpg",
+      "size": 12915
+    }
+  ]
+}
