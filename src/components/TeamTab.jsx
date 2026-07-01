@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, Trash2, Loader2 } from 'lucide-react';
+import { Users, Trash2, Loader2, Mail, UserPlus, Clock, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './Toast';
@@ -17,8 +17,14 @@ export default function TeamTab() {
   const { tenant, membership } = useAuth();
   const toast = useToast();
   const [members, setMembers] = useState([]);
+  const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [confirmRemove, setConfirmRemove] = useState(null);
+
+  // Formulario de invitación
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('doctor');
+  const [inviting, setInviting] = useState(false);
 
   const isOwnerOrAdmin = membership?.role === 'owner' || membership?.role === 'admin';
 
@@ -31,6 +37,15 @@ export default function TeamTab() {
         .select('id, user_id, role, accepted_at, profiles!inner(id, full_name, phone, avatar_url)')
         .eq('tenant_id', tenant.id);
       setMembers(data || []);
+
+      // Invitaciones pendientes (solo owner/admin las ve por RLS)
+      const { data: invs } = await supabase
+        .from('tenant_invitations')
+        .select('id, email, role, status, created_at, expires_at')
+        .eq('tenant_id', tenant.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      setInvitations(invs || []);
     } catch (e) {
       logger.error('load team', e);
     } finally {
@@ -39,6 +54,39 @@ export default function TeamTab() {
   };
 
   useEffect(() => { load(); }, [tenant?.id]);
+
+  const handleInvite = async (e) => {
+    e.preventDefault();
+    const email = inviteEmail.trim().toLowerCase();
+    if (!email) return;
+    setInviting(true);
+    try {
+      const { error } = await supabase.rpc('invite_member', {
+        p_tenant_id: tenant.id,
+        p_email: email,
+        p_role: inviteRole,
+      });
+      if (error) throw error;
+      toast.success(`Invitación enviada a ${email}`);
+      setInviteEmail('');
+      setInviteRole('doctor');
+      load();
+    } catch (err) {
+      toast.error(userFriendlyError(err));
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const revokeInvite = async (invitationId, email) => {
+    const { error } = await supabase.rpc('revoke_invitation', { p_invitation_id: invitationId });
+    if (error) {
+      toast.error(userFriendlyError(error));
+    } else {
+      toast.success(`Invitación a ${email} cancelada`);
+      load();
+    }
+  };
 
   const updateRole = async (membershipId, newRole) => {
     const { error } = await supabase
@@ -138,13 +186,79 @@ export default function TeamTab() {
         </div>
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <p className="text-sm font-semibold text-amber-900 mb-1">¿Quieres invitar a alguien?</p>
-        <p className="text-xs text-amber-800">
-          Por ahora la creación de cuentas se hace desde Supabase Auth. Pídenos que añadamos a alguien con su email + el rol que quieres asignarle.
-          Próximamente: invitaciones por email automáticas desde aquí.
-        </p>
-      </div>
+      {/* Invitar miembros — solo owner/admin */}
+      {isOwnerOrAdmin && (
+        <div className="bg-surface-container-lowest rounded-xl shadow-clinical border border-outline-variant p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-primary/10 p-3 rounded-lg">
+              <UserPlus size={22} className="text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-on-surface">Invitar a alguien</h3>
+              <p className="text-xs text-on-surface-variant">La persona se une con su email al hacer login — sin crear un consultorio nuevo.</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleInvite} className="flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="correo@ejemplo.com"
+                required
+                className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-outline-variant bg-surface-container-low text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <select
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value)}
+              className="px-3 py-2.5 rounded-lg border border-outline-variant bg-surface-container-low text-on-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="doctor">Doctor</option>
+              <option value="admin">Administrador</option>
+              <option value="assistant">Asistente</option>
+              <option value="receptionist">Recepcionista</option>
+            </select>
+            <button
+              type="submit"
+              disabled={inviting}
+              className="clinical-gradient text-on-primary px-5 py-2.5 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50"
+            >
+              {inviting ? <Loader2 size={16} className="animate-spin" /> : 'Invitar'}
+            </button>
+          </form>
+
+          {/* Invitaciones pendientes */}
+          {invitations.length > 0 && (
+            <div className="mt-5">
+              <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">Invitaciones pendientes</p>
+              <div className="space-y-2">
+                {invitations.map((inv) => {
+                  const roleStyle = ROLE_LABELS[inv.role] || { label: inv.role, color: 'bg-gray-100 text-gray-700' };
+                  return (
+                    <div key={inv.id} className="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg border border-outline-variant">
+                      <Clock size={16} className="text-amber-500 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-on-surface truncate">{inv.email}</p>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${roleStyle.color}`}>{roleStyle.label}</span>
+                      </div>
+                      <button
+                        onClick={() => revokeInvite(inv.id, inv.email)}
+                        className="text-on-surface-variant hover:text-error p-1.5"
+                        title="Cancelar invitación"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

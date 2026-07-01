@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Building2, MapPin, Phone, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
+import { Building2, MapPin, Phone, ArrowRight, Loader2, CheckCircle, Users, LogIn } from 'lucide-react';
 
 const PLANS = [
   { id: 'trial', name: 'Trial', price: 'Gratis', period: '14 días', features: ['Hasta 50 pacientes', '1 usuario', 'Módulo básico'], color: 'border-outline-variant' },
@@ -9,7 +9,38 @@ const PLANS = [
 ];
 
 export default function OnboardingPage() {
-  const { createTenant, isSlugAvailable } = useAuth();
+  const { createTenant, isSlugAvailable, getPendingInvitations, acceptInvitation } = useAuth();
+
+  // Invitaciones pendientes: si el usuario fue invitado, ofrecerle UNIRSE en vez
+  // de forzarlo a crear un consultorio nuevo (raíz de los "tenants fantasma").
+  const [invitations, setInvitations] = useState([]);
+  const [checkingInvites, setCheckingInvites] = useState(true);
+  const [showCreateFlow, setShowCreateFlow] = useState(false);
+  const [acceptingId, setAcceptingId] = useState(null);
+  const [inviteError, setInviteError] = useState('');
+
+  useEffect(() => {
+    let mounted = true;
+    getPendingInvitations()
+      .then((invs) => { if (mounted) setInvitations(invs); })
+      .finally(() => { if (mounted) setCheckingInvites(false); });
+    return () => { mounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleAccept = async (invitationId) => {
+    setInviteError('');
+    setAcceptingId(invitationId);
+    try {
+      await acceptInvitation(invitationId);
+      // acceptInvitation re-sincroniza el tenant → el router mostrará el CRM solo.
+    } catch (err) {
+      setInviteError(err.message || 'No se pudo aceptar la invitación.');
+    } finally {
+      setAcceptingId(null);
+    }
+  };
+
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -78,6 +109,66 @@ export default function OnboardingPage() {
   };
 
   const canContinueStep1 = name.trim().length >= 2 && slug.length >= 3 && slugStatus === 'available';
+
+  // Mientras verificamos invitaciones, loader breve (evita flash del wizard)
+  if (checkingInvites) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 size={28} className="animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Si el usuario fue invitado a uno o más consultorios → ofrecer UNIRSE
+  if (invitations.length > 0 && !showCreateFlow) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="w-14 h-14 rounded-2xl clinical-gradient flex items-center justify-center mx-auto mb-4 text-on-primary">
+              <Users size={26} />
+            </div>
+            <h2 className="text-2xl font-bold text-on-surface">Te invitaron a un consultorio</h2>
+            <p className="text-on-surface-variant text-sm mt-1">Únete para empezar a trabajar con tu equipo.</p>
+          </div>
+
+          {inviteError && (
+            <div className="bg-error-container/20 text-error border border-error/20 px-4 py-3 rounded-xl text-sm mb-4">
+              {inviteError}
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {invitations.map((inv) => (
+              <div key={inv.invitation_id} className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-5 flex items-center gap-4">
+                <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                  <Building2 size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-on-surface truncate">{inv.tenant_name}</p>
+                  <p className="text-xs text-on-surface-variant capitalize">Rol: {inv.role}</p>
+                </div>
+                <button
+                  onClick={() => handleAccept(inv.invitation_id)}
+                  disabled={!!acceptingId}
+                  className="clinical-gradient text-on-primary px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-1.5 hover:opacity-90 disabled:opacity-50"
+                >
+                  {acceptingId === inv.invitation_id ? <Loader2 size={16} className="animate-spin" /> : <><LogIn size={15} /> Unirme</>}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setShowCreateFlow(true)}
+            className="w-full mt-6 text-sm text-on-surface-variant hover:text-primary transition-colors"
+          >
+            O crear mi propio consultorio →
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-8">

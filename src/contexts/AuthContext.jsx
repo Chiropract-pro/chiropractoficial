@@ -225,6 +225,27 @@ export function AuthProvider({ children }) {
     return newTenant;
   };
 
+  const getPendingInvitations = async () => {
+    const { data, error } = await supabase.rpc('get_my_pending_invitations');
+    if (error) {
+      logger.error('getPendingInvitations', error);
+      return [];
+    }
+    return data || [];
+  };
+
+  const acceptInvitation = async (invitationId) => {
+    const { data, error } = await supabase.rpc('accept_invitation', { p_invitation_id: invitationId });
+    if (error) {
+      logger.error('acceptInvitation', error);
+      throw new Error(error.message || 'No se pudo aceptar la invitación.');
+    }
+    // Re-sincronizar todo desde la BD (fuente de verdad) para entrar al CRM.
+    const uid = user?.id;
+    if (uid) await loadProfileAndTenant(uid);
+    return Array.isArray(data) ? data[0] : data;
+  };
+
   const updateProfile = async (updates) => {
     const { data, error } = await supabase
       .from('profiles')
@@ -262,6 +283,8 @@ export function AuthProvider({ children }) {
     resetPassword,
     createTenant,
     isSlugAvailable,
+    getPendingInvitations,
+    acceptInvitation,
     updateProfile,
     updateTenant,
     refreshTenant: () => loadProfileAndTenant(user.id),
