@@ -10,11 +10,12 @@ export default function Jornadas() {
   const { jornadas, loading, insertJornada, updateJornada, removeJornada } = useJornadas();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const toast = useToast();
-
-  if (loading && jornadas.length === 0) return <LoadingState message="Cargando jornadas..." />;
   const [showNewForm, setShowNewForm] = useState(false);
   const [selectedJornada, setSelectedJornada] = useState(null);
   const [tab, setTab] = useState('proximas');
+
+  // Todos los hooks arriba de cualquier return condicional (Rules of Hooks)
+  if (loading && jornadas.length === 0) return <LoadingState message="Cargando jornadas..." />;
 
   const proximas = jornadas.filter((j) => j.status === 'programada');
   const pasadas = jornadas.filter((j) => j.status === 'completada' || j.status === 'cancelada');

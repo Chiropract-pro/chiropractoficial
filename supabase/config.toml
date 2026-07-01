@@ -1,0 +1,27 @@
+# Supabase project config — chiropract.co
+# Define verify_jwt por función para que el deploy sea reproducible
+# (sin esto, el default exige JWT de Supabase y bloquea webhooks/OTP públicos con 401).
+
+project_id = "dqxffnibxizlfaeddzrz"
+
+# ── Funciones PÚBLICAS o con auth propia → sin verificación de JWT de Supabase ──
+[functions.wompi-webhook]
+verify_jwt = false        # Lo llama Wompi (sin sesión); valida su propia firma HMAC
+
+[functions.receipt]
+verify_jwt = false        # Página de recibo; valida token propio internamente
+
+[functions.wompi-create-link]
+verify_jwt = false        # Genera link de pago; llamada pública/servidor
+
+[functions.patient-otp-request]
+verify_jwt = false        # Paciente anónimo pide código
+
+[functions.patient-otp-verify]
+verify_jwt = false        # Paciente anónimo valida código
+
+[functions.patient-me]
+verify_jwt = false         # Usa session_token propio del paciente (Bearer)
+
+# ── Funciones con auth de Supabase (staff logueado) → verify_jwt = true (default) ──
+# alegra-emit-invoice, alegra-test-connection, subscription-create-link

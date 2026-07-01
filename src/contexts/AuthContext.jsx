@@ -170,8 +170,10 @@ export function AuthProvider({ children }) {
   };
 
   const resetPassword = async (email) => {
+    // Hash routing: el enlace lleva a /#reset-password, que App.jsx sí sabe rutear
+    // (antes apuntaba a /reset-password, ruta que la SPA no maneja → flujo roto).
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${SITE_URL}/reset-password`,
+      redirectTo: `${SITE_URL}/#reset-password`,
     });
     if (error) throw error;
   };

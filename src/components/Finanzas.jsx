@@ -12,9 +12,10 @@ export default function Finanzas() {
   const { appointments } = useAppointments();
   const { patients } = usePatients();
   const toast = useToast();
-
-  if (loading && transactions.length === 0) return <LoadingState message="Cargando finanzas..." />;
   const [showNewForm, setShowNewForm] = useState(false);
+
+  // Todos los hooks arriba de cualquier return condicional (Rules of Hooks)
+  if (loading && transactions.length === 0) return <LoadingState message="Cargando finanzas..." />;
 
   const incomes = transactions.filter((t) => t.type === 'income');
   const todayStr = new Date().toISOString().split('T')[0];

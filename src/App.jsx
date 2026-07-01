@@ -12,6 +12,7 @@ import Finanzas from './components/Finanzas';
 import Settings from './components/Settings';
 import AuthPage from './components/auth/AuthPage';
 import OnboardingPage from './components/auth/OnboardingPage';
+import ResetPasswordPage from './components/auth/ResetPasswordPage';
 import { useAlerts } from './hooks/useTenantData';
 
 // Landing page components
@@ -119,6 +120,7 @@ function getViewFromHash() {
   const h = window.location.hash;
   if (h === '#crm') return 'crm';
   if (h === '#paciente' || h === '#patient') return 'patient';
+  if (h.startsWith('#reset-password')) return 'reset-password';
   if (h === '#terms') return 'terms';
   if (h === '#privacy') return 'privacy';
   return 'landing';
@@ -153,6 +155,9 @@ function AppRouter() {
       </div>
     );
   }
+
+  // Reset password — flujo de recuperación (Supabase abre sesión temporal de recovery)
+  if (view === 'reset-password') return <ResetPasswordPage onDone={goToLanding} />;
 
   // Legal pages — públicas, accesibles desde cualquier estado
   if (view === 'terms') return <LegalPage doc="terms" onBack={goToLanding} />;
