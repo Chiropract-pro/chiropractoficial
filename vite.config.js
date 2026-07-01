@@ -88,7 +88,7 @@ export default defineConfig({
           },
           {
             // Supabase REST/RPC: Network first, fallback a cache (ofrece HC offline si carga antes)
-            urlPattern: /^https:\/\/onwgfixvbyknotnbrkgr\.supabase\.co\/rest\/v1\/.*/i,
+            urlPattern: /^https:\/\/dqxffnibxizlfaeddzrz\.supabase\.co\/rest\/v1\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'chiro-supabase-rest',
@@ -99,12 +99,12 @@ export default defineConfig({
           },
           {
             // Edge Functions: Network only (no cachear acciones — solo lecturas idempotentes via REST)
-            urlPattern: /^https:\/\/onwgfixvbyknotnbrkgr\.supabase\.co\/functions\/v1\/.*/i,
+            urlPattern: /^https:\/\/dqxffnibxizlfaeddzrz\.supabase\.co\/functions\/v1\/.*/i,
             handler: 'NetworkOnly',
           },
           {
             // Storage signed URLs (archivos clínicos / fotos)
-            urlPattern: /^https:\/\/onwgfixvbyknotnbrkgr\.supabase\.co\/storage\/v1\/.*/i,
+            urlPattern: /^https:\/\/dqxffnibxizlfaeddzrz\.supabase\.co\/storage\/v1\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'chiro-storage',

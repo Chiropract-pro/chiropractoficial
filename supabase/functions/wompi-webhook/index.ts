@@ -4,7 +4,7 @@
 //
 // Configuración en Wompi:
 //   Dashboard → Eventos → URL del endpoint:
-//     https://onwgfixvbyknotnbrkgr.supabase.co/functions/v1/wompi-webhook
+//     https://dqxffnibxizlfaeddzrz.supabase.co/functions/v1/wompi-webhook
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.0';
 

@@ -4,7 +4,7 @@
 //
 // Deploy: supabase functions deploy receipt
 // Invocar:
-//   GET https://onwgfixvbyknotnbrkgr.supabase.co/functions/v1/receipt?sale_id=<uuid>
+//   GET https://dqxffnibxizlfaeddzrz.supabase.co/functions/v1/receipt?sale_id=<uuid>
 //   Header: Authorization: Bearer <SUPABASE_SERVICE_ROLE_KEY>  (para n8n)
 //   o      Authorization: Bearer <patient_jwt>                 (para paciente autenticado)
 

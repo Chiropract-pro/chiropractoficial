@@ -204,10 +204,23 @@ export function AuthProvider({ children }) {
       throw new Error('No se pudo crear el consultorio. Inténtalo de nuevo.');
     }
 
-    setTenant(data);
-    setMembership({ role: 'owner', tenant_id: data.id });
-    setProfile((prev) => prev ? { ...prev, default_tenant_id: data.id } : prev);
-    return data;
+    // El RPC `RETURNS tenants` (fila única). Según la versión de PostgREST, `data`
+    // puede llegar como objeto {...} o como array [{...}]. Normalizamos para evitar
+    // que `setTenant([...])` deje el estado roto y el onboarding entre en bucle.
+    const newTenant = Array.isArray(data) ? data[0] : data;
+
+    // Si por cualquier motivo no obtuvimos un tenant válido, re-sincronizamos desde
+    // la BD (fuente de verdad) en vez de dejar el estado optimista inconsistente.
+    if (!newTenant?.id) {
+      const uid = user?.id;
+      if (uid) await loadProfileAndTenant(uid);
+      return newTenant;
+    }
+
+    setTenant(newTenant);
+    setMembership({ role: 'owner', tenant_id: newTenant.id, accepted_at: new Date().toISOString() });
+    setProfile((prev) => (prev ? { ...prev, default_tenant_id: newTenant.id } : prev));
+    return newTenant;
   };
 
   const updateProfile = async (updates) => {
