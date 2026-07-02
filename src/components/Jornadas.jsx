@@ -5,6 +5,10 @@ import { useJornadas } from '../hooks/useTenantData';
 import { useToast } from './Toast';
 import { userFriendlyError } from '../lib/logger';
 import LoadingState from './LoadingState';
+import Button from './ui/Button';
+import { Card, EmptyState } from './ui/Card';
+import { cn } from '../lib/utils';
+import { MapPin } from 'lucide-react';
 
 export default function Jornadas() {
   const { jornadas, loading, insertJornada, updateJornada, removeJornada } = useJornadas();

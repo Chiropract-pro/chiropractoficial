@@ -15,21 +15,24 @@ import OnboardingPage from './components/auth/OnboardingPage';
 import ResetPasswordPage from './components/auth/ResetPasswordPage';
 import { useAlerts } from './hooks/useTenantData';
 
-// Landing page components
+// Landing page components (software-first)
 import SpineVideo from './components/landing/SpineVideo';
 import Navbar from './components/landing/Navbar';
-import HeroSection from './components/landing/HeroSection';
-import ServicesSection from './components/landing/ServicesSection';
-import AboutSection from './components/landing/AboutSection';
-import JornadasSection from './components/landing/JornadasSection';
-import TestimonialsSection from './components/landing/TestimonialsSection';
-import ContactSection from './components/landing/ContactSection';
+import HeroSoftware from './components/landing/HeroSoftware';
+import SoftwareFeatures from './components/landing/SoftwareFeatures';
+import DirectoryTeaser from './components/landing/DirectoryTeaser';
+import PricingSection from './components/landing/PricingSection';
+import SoftwareFooter from './components/landing/SoftwareFooter';
 import WhatsAppFAB from './components/landing/WhatsAppFAB';
 import LegalPage from './components/landing/LegalPage';
-import PricingSection from './components/landing/PricingSection';
 
 // Patient panel
 import PatientApp from './components/patient/PatientApp';
+
+// Directorio de médicos + red profesional
+import DirectoryPage from './components/directory/DirectoryPage';
+import PractitionerProfilePage from './components/directory/PractitionerProfilePage';
+import FeedPage from './components/social/FeedPage';
 
 // PWA UX
 import { InstallPrompt, OfflineIndicator, UpdatePrompt } from './components/PWAComponents';
@@ -103,13 +106,11 @@ function LandingApp() {
       <SpineVideo />
       <Navbar />
       <div className="relative z-10">
-        <HeroSection />
-        <ServicesSection />
-        <AboutSection />
-        <JornadasSection />
-        <TestimonialsSection />
+        <HeroSoftware />
+        <SoftwareFeatures />
+        <DirectoryTeaser />
         <PricingSection />
-        <ContactSection />
+        <SoftwareFooter />
       </div>
       <WhatsAppFAB />
     </div>
@@ -123,7 +124,16 @@ function getViewFromHash() {
   if (h.startsWith('#reset-password')) return 'reset-password';
   if (h === '#terms') return 'terms';
   if (h === '#privacy') return 'privacy';
+  if (h === '#directorio' || h === '#medicos') return 'directory';
+  if (h === '#comunidad' || h === '#red' || h === '#feed') return 'feed';
+  if (h.startsWith('#dr/')) return 'practitioner';
   return 'landing';
+}
+
+// slug del médico desde el hash: #dr/miguel-diaz → 'miguel-diaz'
+function getSlugFromHash() {
+  const h = window.location.hash;
+  return h.startsWith('#dr/') ? h.slice(4) : null;
 }
 
 function AppRouter() {
@@ -165,6 +175,25 @@ function AppRouter() {
 
   // Patient panel — pública (auth propia vía OTP, independiente del CRM)
   if (view === 'patient') return <PatientApp onBack={goToLanding} />;
+
+  // Directorio de médicos + perfiles — públicos (no requieren sesión)
+  if (view === 'directory') {
+    return (
+      <DirectoryPage
+        onBack={goToLanding}
+        onOpenProfile={(slug) => { window.location.hash = `#dr/${slug}`; }}
+      />
+    );
+  }
+  if (view === 'practitioner') {
+    return (
+      <PractitionerProfilePage
+        slug={getSlugFromHash()}
+        onBack={() => { window.location.hash = '#directorio'; }}
+      />
+    );
+  }
+  if (view === 'feed') return <FeedPage onBack={goToLanding} />;
 
   // Auth flow
   if (!user) {

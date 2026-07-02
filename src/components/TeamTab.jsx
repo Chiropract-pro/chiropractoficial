@@ -14,7 +14,7 @@ const ROLE_LABELS = {
 };
 
 export default function TeamTab() {
-  const { tenant, membership } = useAuth();
+  const { tenant, membership, profile } = useAuth();
   const toast = useToast();
   const [members, setMembers] = useState([]);
   const [invitations, setInvitations] = useState([]);
@@ -67,7 +67,27 @@ export default function TeamTab() {
         p_role: inviteRole,
       });
       if (error) throw error;
-      toast.success(`Invitación enviada a ${email}`);
+
+      // Notificar por correo (best-effort — la invitación ya quedó creada aunque el email falle)
+      let emailed = true;
+      try {
+        const { error: mailErr } = await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'team_invite',
+            to: email,
+            data: {
+              email,
+              tenant_id: tenant.id,
+              tenant_name: tenant.name,
+              inviter_name: profile?.full_name || 'Tu colega',
+              role: ROLE_LABELS[inviteRole]?.label || inviteRole,
+            },
+          },
+        });
+        if (mailErr) { emailed = false; logger.error('send team_invite email', mailErr); }
+      } catch (e) { emailed = false; logger.error('send team_invite email', e); }
+
+      toast.success(emailed ? `Invitación enviada a ${email}` : `Invitación creada. No se pudo enviar el correo a ${email}.`);
       setInviteEmail('');
       setInviteRole('doctor');
       load();

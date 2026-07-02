@@ -5,6 +5,9 @@ import { usePatients } from '../hooks/useTenantData';
 import { useToast } from './Toast';
 import { userFriendlyError } from '../lib/logger';
 import { downloadCsv } from '../utils/csv';
+import Button from './ui/Button';
+import Badge from './ui/Badge';
+import { Card } from './ui/Card';
 import ClinicalHistoryPanel from './clinical/ClinicalHistoryPanel';
 import ClinicalFilesPanel from './clinical/ClinicalFilesPanel';
 
@@ -43,54 +46,39 @@ export default function Pacientes() {
 
   const statusBadge = (status) => {
     const s = patientStatuses.find((ps) => ps.value === status);
-    const colors = {
-      activo: 'bg-green-100 text-green-700',
-      inactivo: 'bg-gray-100 text-gray-600',
-      en_tratamiento: 'bg-blue-100 text-blue-700',
-      completado: 'bg-teal-100 text-teal-700',
-    };
-    return (
-      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${colors[status] || 'bg-gray-100 text-gray-600'}`}>
-        {s?.label || status}
-      </span>
-    );
+    return <Badge status={status}>{s?.label || status}</Badge>;
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-on-surface">Pacientes</h2>
-          <p className="text-on-surface-variant text-sm mt-1">{patientList.length} pacientes registrados</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-tertiary-fixed-dim">Directorio clínico</p>
+          <h1 className="font-display text-3xl font-semibold text-on-surface mt-1">Pacientes</h1>
+          <p className="text-on-surface-variant text-sm mt-1">
+            <span className="font-semibold text-on-surface tnum">{patientList.length}</span> registrados ·
+            <span className="tnum"> {patientList.filter((p) => p.status === 'activo' || p.status === 'en_tratamiento').length}</span> en tratamiento
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="outline" size="sm" icon={Download}
+            className="hidden sm:inline-flex"
             onClick={() => downloadCsv(
-              `pacientes-${new Date().toISOString().slice(0,10)}.csv`,
+              `pacientes-${new Date().toISOString().slice(0, 10)}.csv`,
               filtered,
               [
-                { key: 'name', label: 'Nombre' },
-                { key: 'phone', label: 'Teléfono' },
-                { key: 'email', label: 'Email' },
-                { key: 'city', label: 'Ciudad' },
-                { key: 'status', label: 'Estado' },
-                { key: 'treatment', label: 'Tratamiento' },
+                { key: 'name', label: 'Nombre' }, { key: 'phone', label: 'Teléfono' }, { key: 'email', label: 'Email' },
+                { key: 'city', label: 'Ciudad' }, { key: 'status', label: 'Estado' }, { key: 'treatment', label: 'Tratamiento' },
                 { key: 'lastVisit', label: 'Última visita' },
                 { key: 'totalSpent', label: 'Total gastado', format: (v) => v ?? 0 },
                 { key: 'appointmentsCount', label: 'Total citas', format: (v) => v ?? 0 },
-              ]
+              ],
             )}
-            className="hidden sm:inline-flex items-center gap-2 px-3 py-2 border border-outline-variant text-on-surface-variant hover:bg-surface-container-low rounded-lg text-sm font-medium transition-colors"
-            title="Exportar a CSV (Excel)"
           >
-            <Download size={16} /> Exportar
-          </button>
-          <button
-            onClick={() => setShowNewForm(true)}
-            className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-          >
-            <Plus size={16} /> Nuevo Paciente
-          </button>
+            Exportar
+          </Button>
+          <Button size="sm" icon={Plus} onClick={() => setShowNewForm(true)}>Nuevo paciente</Button>
         </div>
       </div>
 
@@ -134,13 +122,13 @@ export default function Pacientes() {
           <p className="text-on-surface-variant">Cargando pacientes...</p>
         </div>
       ) : (
-      <div className="bg-surface-container-lowest rounded-xl shadow-clinical border border-outline-variant overflow-hidden">
+      <div className="bg-surface-container-lowest rounded-2xl shadow-clinical border border-outline-variant overflow-hidden">
         {/* Mobile: cards */}
         <div className="md:hidden divide-y divide-outline-variant">
           {filtered.map((p) => (
             <div key={p.id} className="p-4 hover:bg-surface-container-low/50 cursor-pointer" onClick={() => setSelectedPatient(p)}>
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-tertiary-container text-primary flex items-center justify-center text-sm font-bold flex-shrink-0">
                   {(p.name || 'U').split(' ').map((n) => n[0] || '').join('').slice(0, 2)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -183,7 +171,7 @@ export default function Pacientes() {
                 >
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+                      <div className="w-8 h-8 rounded-xl bg-tertiary-container text-primary flex items-center justify-center text-xs font-bold">
                         {(p.name || 'U').split(' ').map((n) => n[0] || '').join('').slice(0, 2)}
                       </div>
                       <div>
@@ -196,7 +184,7 @@ export default function Pacientes() {
                   <td className="px-4 py-3 text-sm text-on-surface-variant">{p.city}</td>
                   <td className="px-4 py-3">{statusBadge(p.status)}</td>
                   <td className="px-4 py-3 text-sm text-on-surface-variant">{formatShortDateLocal(p.lastVisit)}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-on-surface text-right">{formatCOP(p.totalSpent)}</td>
+                  <td className="px-4 py-3 text-sm font-display font-semibold text-on-surface text-right tnum">{formatCOP(p.totalSpent)}</td>
                   <td className="px-4 py-3">
                     <ChevronRight size={16} className="text-on-surface-variant/50" />
                   </td>

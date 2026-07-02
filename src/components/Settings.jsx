@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Settings as SettingsIcon, Building2, User, CreditCard, Shield, Save, CheckCircle, MessageCircle, Clock, Users, FileText } from 'lucide-react';
+import { Settings as SettingsIcon, Building2, User, CreditCard, Shield, Save, CheckCircle, MessageCircle, Clock, Users, FileText, Globe } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { wa } from '../lib/clinic';
 import TeamTab from './TeamTab';
 import BillingSettings from './billing/BillingSettings';
 import PlanTab from './billing/PlanTab';
+import PublicProfileTab from './directory/PublicProfileTab';
 
 export default function Settings() {
   const { tenant, profile, updateProfile, updateTenant } = useAuth();
@@ -47,6 +48,7 @@ export default function Settings() {
 
   const tabs = [
     { id: 'clinic', label: 'Consultorio', icon: Building2 },
+    { id: 'directory', label: 'Perfil público', icon: Globe },
     { id: 'team', label: 'Equipo', icon: Users },
     { id: 'billing', label: 'Facturación DIAN', icon: FileText },
     { id: 'profile', label: 'Mi Perfil', icon: User },
@@ -151,6 +153,9 @@ export default function Settings() {
           </form>
         </div>
       )}
+
+      {/* Public Directory Profile Tab */}
+      {activeTab === 'directory' && <PublicProfileTab />}
 
       {/* Team Tab */}
       {activeTab === 'team' && <TeamTab />}

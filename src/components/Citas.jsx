@@ -8,6 +8,10 @@ import LoadingState from './LoadingState';
 import PaymentLinkButton from './PaymentLinkButton';
 import { downloadCsv } from '../utils/csv';
 import SoapEditorModal from './clinical/SoapEditorModal';
+import Button from './ui/Button';
+import Badge from './ui/Badge';
+import { Card } from './ui/Card';
+import { cn } from '../lib/utils';
 
 export default function Citas() {
   const { appointments, loading, insertAppointment, updateAppointment } = useAppointments();
@@ -58,41 +62,33 @@ export default function Citas() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-on-surface">Citas</h2>
-          <p className="text-on-surface-variant text-sm mt-1">Gestión de agendamiento</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-tertiary-fixed-dim">Agenda</p>
+          <h1 className="font-display text-3xl font-semibold text-on-surface mt-1">Citas</h1>
+          <p className="text-on-surface-variant text-sm mt-1">Gestión de agendamiento y confirmaciones</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="outline" size="sm" icon={Download} className="hidden sm:inline-flex"
             onClick={() => downloadCsv(
-              `citas-${new Date().toISOString().slice(0,10)}.csv`,
+              `citas-${new Date().toISOString().slice(0, 10)}.csv`,
               appointments,
               [
-                { key: 'date', label: 'Fecha' },
-                { key: 'time', label: 'Hora' },
-                { key: 'patient_name', label: 'Paciente' },
-                { key: 'type', label: 'Tipo' },
-                { key: 'location', label: 'Ubicación' },
-                { key: 'status', label: 'Estado' },
+                { key: 'date', label: 'Fecha' }, { key: 'time', label: 'Hora' }, { key: 'patient_name', label: 'Paciente' },
+                { key: 'type', label: 'Tipo' }, { key: 'location', label: 'Ubicación' }, { key: 'status', label: 'Estado' },
                 { key: 'price', label: 'Precio', format: (v) => v ?? 0 },
-              ]
+              ],
             )}
-            className="hidden sm:inline-flex items-center gap-2 px-3 py-2 border border-outline-variant text-on-surface-variant hover:bg-surface-container-low rounded-lg text-sm font-medium transition-colors"
           >
-            <Download size={16} /> Exportar
-          </button>
-          <button
-            onClick={() => setShowNewForm(true)}
-            className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-          >
-            <Plus size={16} /> Agendar Cita
-          </button>
+            Exportar
+          </Button>
+          <Button size="sm" icon={Plus} onClick={() => setShowNewForm(true)}>Agendar cita</Button>
         </div>
       </div>
 
-      {/* View Tabs */}
-      <div className="flex gap-2">
+      {/* Tabs de vista */}
+      <div className="inline-flex bg-surface-container-high rounded-xl p-1 gap-1">
         {[
           { id: 'today', label: 'Hoy' },
           { id: 'week', label: 'Semana' },
@@ -101,100 +97,88 @@ export default function Citas() {
           <button
             key={tab.id}
             onClick={() => setView(tab.id)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-              view === tab.id ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
-            }`}
+            className={cn(
+              'px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors',
+              view === tab.id ? 'bg-surface-container-lowest text-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface',
+            )}
           >
             {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-surface-container-lowest rounded-xl p-4 shadow-clinical border border-outline-variant text-center">
-          <p className="text-2xl font-bold text-on-surface">{activeApts.length}</p>
-          <p className="text-xs text-on-surface-variant">Citas hoy</p>
-        </div>
-        <div className="bg-surface-container-lowest rounded-xl p-4 shadow-clinical border border-outline-variant text-center">
-          <p className="text-2xl font-bold text-success">{confirmedApts.length}</p>
-          <p className="text-xs text-on-surface-variant">Confirmadas</p>
-        </div>
-        <div className="bg-surface-container-lowest rounded-xl p-4 shadow-clinical border border-outline-variant text-center">
-          <p className="text-2xl font-bold text-accent">{pendingApts.length}</p>
-          <p className="text-xs text-on-surface-variant">Pendientes</p>
-        </div>
-        <div className="bg-surface-container-lowest rounded-xl p-4 shadow-clinical border border-outline-variant text-center">
-          <p className="text-2xl font-bold text-primary">{formatCOP(activeApts.reduce((s, a) => s + (a.price || 0), 0))}</p>
-          <p className="text-xs text-on-surface-variant">Ingreso proyectado</p>
-        </div>
+      {/* Resumen conectado */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden shadow-clinical">
+        {[
+          { v: activeApts.length, k: 'Citas hoy', cls: 'text-on-surface' },
+          { v: confirmedApts.length, k: 'Confirmadas', cls: 'text-success' },
+          { v: pendingApts.length, k: 'Pendientes', cls: 'text-warning' },
+          { v: formatCOP(activeApts.reduce((s, a) => s + (a.price || 0), 0)), k: 'Proyectado', cls: 'text-primary' },
+        ].map((s, i) => (
+          <div key={s.k} className={cn('p-4', i < 3 && 'sm:border-r', i % 2 === 0 && 'border-r', i < 2 && 'border-b sm:border-b-0', 'border-outline-variant')}>
+            <p className={cn('font-display text-2xl font-semibold leading-none tnum', s.cls)}>{s.v}</p>
+            <p className="text-[11px] text-on-surface-variant mt-1.5">{s.k}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Today View */}
+      {/* Vista Hoy — riel vertebral */}
       {view === 'today' && (
-        <div className="bg-surface-container-lowest rounded-xl shadow-clinical border border-outline-variant">
-          <div className="p-4 border-b border-outline-variant">
-            <h3 className="font-semibold text-on-surface">Citas de hoy — {formatDate(todayStr)}</h3>
+        <Card pad={false} className="overflow-hidden">
+          <div className="px-5 py-4 border-b border-outline-variant">
+            <h3 className="font-display text-lg font-semibold text-on-surface">Hoy — {formatDate(todayStr)}</h3>
           </div>
-          <div className="divide-y divide-outline-variant/20">
-            {todayApts.length === 0 ? (
-              <div className="py-12 text-center text-on-surface-variant/70 text-sm">No hay citas para hoy</div>
-            ) : (
-              todayApts.map((apt) => (
-                <div key={apt.id} className={`flex items-center gap-4 p-4 hover:bg-surface-container-low transition-colors ${apt.status === 'cancelada' ? 'opacity-50' : ''}`}>
-                  <div className="text-center min-w-[70px]">
-                    <p className="text-lg font-bold text-primary">{apt.time}</p>
+          {todayApts.length === 0 ? (
+            <div className="py-14 text-center text-on-surface-variant text-sm">No hay citas para hoy</div>
+          ) : (
+            <div className="relative pl-8 pr-5 py-3">
+              <div className="absolute left-[18px] top-4 bottom-4 w-0.5 bg-outline-variant" />
+              {todayApts.map((apt) => (
+                <div key={apt.id} className={cn('relative flex items-center gap-4 py-3.5 border-b border-dashed border-outline-variant last:border-b-0', apt.status === 'cancelada' && 'opacity-50')}>
+                  <span className={cn('absolute -left-[26px] w-3 h-3 rounded-full border-2 border-surface-container-lowest', apt.status === 'confirmada' ? 'bg-success' : apt.status === 'pendiente' ? 'bg-warning' : apt.status === 'completada' ? 'bg-info' : 'bg-danger')} />
+                  <div className="min-w-[58px]">
+                    <p className="font-display text-lg font-semibold text-primary tnum leading-none">{apt.time}</p>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-on-surface">{apt.patient_name}</p>
-                      {statusIcon(apt.status)}
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-on-surface-variant/70">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-on-surface truncate">{apt.patient_name}</p>
+                    <div className="flex items-center gap-3 mt-0.5 text-xs text-on-surface-variant">
                       <span className="flex items-center gap-1"><Clock size={12} /> {typeLabel(apt.type)}</span>
                       <span className="flex items-center gap-1"><MapPin size={12} /> {locationLabel(apt.location)}</span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-on-surface">{formatCOP(apt.price || 0)}</p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      apt.status === 'confirmada' ? 'bg-green-100 text-green-700' :
-                      apt.status === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
-                      apt.status === 'completada' ? 'bg-blue-100 text-blue-700' :
-                      'bg-red-100 text-red-700'
-                    }`}>
-                      {apt.status}
-                    </span>
+                  <div className="text-right hidden sm:block">
+                    <p className="font-display text-sm font-semibold text-on-surface tnum">{formatCOP(apt.price || 0)}</p>
+                    <Badge status={apt.status} className="mt-1" />
                   </div>
-                  <div className="flex gap-1 flex-wrap">
+                  <div className="flex gap-1 flex-wrap justify-end max-w-[180px]">
                     {apt.status === 'pendiente' && (
-                      <button onClick={() => updateAppointment(apt.id, { status: 'confirmada' })} className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded hover:bg-green-100 transition-colors">Confirmar</button>
+                      <button onClick={() => updateAppointment(apt.id, { status: 'confirmada' })} className="text-xs font-semibold bg-[#e0efe8] text-[#1f6b52] px-2.5 py-1 rounded-lg hover:bg-[#d2e7dd] transition-colors">Confirmar</button>
                     )}
                     {apt.status === 'confirmada' && (
-                      <button onClick={() => updateAppointment(apt.id, { status: 'completada' })} className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 transition-colors">Completar</button>
+                      <button onClick={() => updateAppointment(apt.id, { status: 'completada' })} className="text-xs font-semibold bg-[#e0e9f1] text-[#3a5a78] px-2.5 py-1 rounded-lg hover:bg-[#d2e0ec] transition-colors">Completar</button>
                     )}
                     {apt.status !== 'cancelada' && apt.status !== 'completada' && (
-                      <button onClick={() => updateAppointment(apt.id, { status: 'cancelada' })} className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100 transition-colors">Cancelar</button>
+                      <button onClick={() => updateAppointment(apt.id, { status: 'cancelada' })} className="text-xs font-semibold bg-[#f6ddd3] text-[#a03a22] px-2.5 py-1 rounded-lg hover:bg-[#f0cfc1] transition-colors">Cancelar</button>
                     )}
                     <button
                       onClick={() => setSoapForApt(apt)}
-                      className="text-xs bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20 transition-colors flex items-center gap-1"
+                      className="text-xs font-semibold bg-primary/10 text-primary px-2.5 py-1 rounded-lg hover:bg-primary/15 transition-colors flex items-center gap-1"
                       title="Crear/editar nota SOAP"
                     >
                       <Stethoscope size={11} /> SOAP
                     </button>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-          {activeApts.length > 0 && (
-            <div className="p-4 border-t border-outline-variant flex justify-between text-sm">
-              <span className="text-on-surface-variant">Total: {activeApts.length} citas</span>
-              <span className="font-semibold text-primary">{formatCOP(activeApts.reduce((s, a) => s + (a.price || 0), 0))}</span>
+              ))}
             </div>
           )}
-        </div>
+          {activeApts.length > 0 && (
+            <div className="px-5 py-3.5 border-t border-outline-variant flex justify-between text-sm">
+              <span className="text-on-surface-variant">Total · {activeApts.length} citas</span>
+              <span className="font-display font-semibold text-primary tnum">{formatCOP(activeApts.reduce((s, a) => s + (a.price || 0), 0))}</span>
+            </div>
+          )}
+        </Card>
       )}
 
       {/* Week View */}
@@ -211,18 +195,11 @@ export default function Citas() {
               ) : (
                 <div className="space-y-2">
                   {day.appointments.map((apt) => (
-                    <div key={apt.id} className="flex items-center gap-3 p-2 bg-surface-container-low rounded-lg text-sm">
-                      <span className="font-bold text-primary min-w-[50px]">{apt.time}</span>
-                      <span className="text-on-surface flex-1">{apt.patient_name}</span>
-                      <span className="text-xs text-on-surface-variant/70">{typeLabel(apt.type)}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        apt.status === 'confirmada' ? 'bg-green-100 text-green-700' :
-                        apt.status === 'pendiente' ? 'bg-yellow-100 text-yellow-700' :
-                        apt.status === 'completada' ? 'bg-blue-100 text-blue-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {apt.status}
-                      </span>
+                    <div key={apt.id} className="flex items-center gap-3 p-2.5 bg-surface-container-low rounded-lg text-sm">
+                      <span className="font-display font-semibold text-primary min-w-[50px] tnum">{apt.time}</span>
+                      <span className="text-on-surface flex-1 truncate">{apt.patient_name}</span>
+                      <span className="text-xs text-on-surface-variant hidden sm:inline">{typeLabel(apt.type)}</span>
+                      <Badge status={apt.status} />
                     </div>
                   ))}
                 </div>

@@ -23,5 +23,8 @@ verify_jwt = false        # Paciente anónimo valida código
 [functions.patient-me]
 verify_jwt = false         # Usa session_token propio del paciente (Bearer)
 
+[functions.send-email]
+verify_jwt = false         # Valida su propia auth (service_role o JWT de usuario) internamente
+
 # ── Funciones con auth de Supabase (staff logueado) → verify_jwt = true (default) ──
 # alegra-emit-invoice, alegra-test-connection, subscription-create-link

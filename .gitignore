@@ -35,3 +35,7 @@ supabase/.temp/
 supabase/.branches/
 
 .vercel
+
+# Claude Code / preview local config
+.claude/
+session.json

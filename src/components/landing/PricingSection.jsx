@@ -23,7 +23,7 @@ export default function PricingSection() {
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
           <p className="text-sm font-bold text-primary uppercase tracking-wider mb-2">Planes</p>
-          <h2 className="text-4xl md:text-5xl font-bold text-on-surface tracking-tight">
+          <h2 className="font-display text-4xl md:text-5xl font-semibold text-on-surface tracking-tight">
             Para tu consultorio
           </h2>
           <p className="text-on-surface-variant text-lg mt-3 max-w-2xl mx-auto">

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Menu, X, LogIn, User as UserIcon } from 'lucide-react';
-import { wa, clinic } from '../../lib/clinic';
+import { clinic } from '../../lib/clinic';
 
 const navLinks = [
-  { label: 'Servicios', href: '#servicios' },
-  { label: 'Jornadas', href: '#jornadas' },
-  { label: 'Dr. Díaz', href: '#about' },
-  { label: 'Contacto', href: '#contacto' },
+  { label: 'Producto', href: '#producto' },
+  { label: 'Médicos', href: '#directorio' },
+  { label: 'Comunidad', href: '#comunidad' },
+  { label: 'Precios', href: '#pricing' },
 ];
 
 export default function Navbar() {
@@ -55,14 +55,6 @@ export default function Navbar() {
                 {link.label}
               </a>
             ))}
-            <a
-              href={wa.schedule()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="clinical-gradient text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 active:scale-95 transition-all"
-            >
-              Agendar Cita
-            </a>
             <button
               onClick={goToPatient}
               className="flex items-center gap-1.5 text-sm font-medium text-on-surface-variant hover:text-primary transition-colors"
@@ -74,7 +66,13 @@ export default function Navbar() {
               onClick={goToCRM}
               className="flex items-center gap-1.5 text-sm font-medium text-on-surface-variant hover:text-primary transition-colors"
             >
-              <LogIn size={16} /> CRM
+              <LogIn size={16} /> Ingresar
+            </button>
+            <button
+              onClick={goToCRM}
+              className="clinical-gradient text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 active:scale-95 transition-all"
+            >
+              Empieza gratis
             </button>
           </div>
 
@@ -105,7 +103,13 @@ export default function Navbar() {
               onClick={() => { setOpen(false); goToCRM(); }}
               className="flex items-center gap-1.5 py-2 text-sm font-medium text-on-surface-variant hover:text-primary"
             >
-              <LogIn size={16} /> CRM
+              <LogIn size={16} /> Ingresar
+            </button>
+            <button
+              onClick={() => { setOpen(false); goToCRM(); }}
+              className="w-full clinical-gradient text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:opacity-90 transition-all mt-1"
+            >
+              Empieza gratis
             </button>
           </div>
         )}
