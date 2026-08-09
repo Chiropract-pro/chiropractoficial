@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../lib/logger';
+import { isDemoMode, DEMO_SUBSCRIPTION, DEMO_PLANS } from '../lib/demo';
+
+const DEMO = isDemoMode();
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -10,11 +13,16 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
  */
 export function useSubscription() {
   const { tenant } = useAuth();
-  const [subscription, setSubscription] = useState(null);
-  const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // En demostración se sirven datos de ejemplo. Sin esto, el TrialBanner —que
+  // vive en el shell del CRM— lanzaba DOS consultas por cada carga de `#demo`
+  // que fallaban con 400, porque el tenant de ejemplo no es un UUID real. El
+  // modo demostración promete no tocar la red: hay que cumplirlo.
+  const [subscription, setSubscription] = useState(DEMO ? DEMO_SUBSCRIPTION : null);
+  const [plans, setPlans] = useState(DEMO ? DEMO_PLANS : []);
+  const [loading, setLoading] = useState(!DEMO);
 
   const reload = useCallback(async () => {
+    if (DEMO) return;
     if (!tenant?.id) { setLoading(false); return; }
     setLoading(true);
     try {

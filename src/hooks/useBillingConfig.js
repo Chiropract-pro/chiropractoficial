@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../lib/logger';
+import { isDemoMode } from '../lib/demo';
+
+const DEMO = isDemoMode();
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
@@ -11,9 +14,10 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 export function useBillingConfig() {
   const { tenant } = useAuth();
   const [config, setConfig] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!DEMO);
 
   const reload = useCallback(async () => {
+    if (DEMO) { setLoading(false); return; }   // ver la nota en useSubscription
     if (!tenant?.id) { setLoading(false); return; }
     setLoading(true);
     try {

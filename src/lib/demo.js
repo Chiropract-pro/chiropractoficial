@@ -202,3 +202,23 @@ export const DEMO_TABLES = {
 };
 
 export const DEMO_SALES = sales;
+
+/** Suscripción de ejemplo: en demostración la pestaña Plan enseña un Pro activo. */
+export const DEMO_SUBSCRIPTION = {
+  tenant_id: 'demo-tenant',
+  plan_id: 'pro',
+  plan_name: 'Pro',
+  plan_tagline: 'Para consultorios en crecimiento',
+  status: 'active',
+  current_period_end: day(23),
+  days_remaining: 23,
+  cancel_at_period_end: false,
+  max_patients: 1000,
+  max_users: 10,
+  price_cop_monthly: 399000,
+};
+
+export const DEMO_PLANS = [
+  { id: 'basic', name: 'Basic', tagline: 'Para empezar', price_cop_monthly: 199000, max_patients: 300, max_users: 3, is_public: true, display_order: 1 },
+  { id: 'pro', name: 'Pro', tagline: 'Para consultorios en crecimiento', price_cop_monthly: 399000, max_patients: 1000, max_users: 10, is_public: true, display_order: 2 },
+];
