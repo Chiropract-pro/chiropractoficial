@@ -7,9 +7,9 @@ import { userFriendlyError, logger } from '../lib/logger';
 
 const ROLE_LABELS = {
   owner: { label: 'Owner', color: 'bg-primary text-on-primary' },
-  admin: { label: 'Administrador', color: 'bg-blue-100 text-blue-700' },
-  doctor: { label: 'Doctor', color: 'bg-green-100 text-green-700' },
-  assistant: { label: 'Asistente', color: 'bg-amber-100 text-amber-700' },
+  admin: { label: 'Administrador', color: 'bg-[#e0e9f1] text-[#3a5a78]' },
+  doctor: { label: 'Doctor', color: 'bg-[#e0efe8] text-[#1f6b52]' },
+  assistant: { label: 'Asistente', color: 'bg-[#f6e7db] text-[#a85b32]' },
   receptionist: { label: 'Recepcionista', color: 'bg-purple-100 text-purple-700' },
 };
 
@@ -159,7 +159,7 @@ export default function TeamTab() {
         <div className="space-y-3">
           {members.map((m) => {
             const profile = m.profiles;
-            const roleStyle = ROLE_LABELS[m.role] || { label: m.role, color: 'bg-gray-100 text-gray-700' };
+            const roleStyle = ROLE_LABELS[m.role] || { label: m.role, color: 'bg-surface-container-high text-on-surface-variant' };
             const initials = (profile.full_name || 'U').split(' ').map((n) => n[0] || '').join('').slice(0, 2);
             const isMe = m.user_id === membership?.user_id;
             const isConfirming = confirmRemove === m.id;
@@ -256,7 +256,7 @@ export default function TeamTab() {
               <p className="text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">Invitaciones pendientes</p>
               <div className="space-y-2">
                 {invitations.map((inv) => {
-                  const roleStyle = ROLE_LABELS[inv.role] || { label: inv.role, color: 'bg-gray-100 text-gray-700' };
+                  const roleStyle = ROLE_LABELS[inv.role] || { label: inv.role, color: 'bg-surface-container-high text-on-surface-variant' };
                   return (
                     <div key={inv.id} className="flex items-center gap-3 p-3 bg-surface-container-low rounded-lg border border-outline-variant">
                       <Clock size={16} className="text-amber-500 flex-shrink-0" />

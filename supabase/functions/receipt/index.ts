@@ -36,6 +36,14 @@ function escapeHtml(s: string): string {
     .replaceAll("'", '&#39;');
 }
 
+// Comparación en tiempo (casi) constante para tokens.
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+}
+
 function pendingHtml(status?: string): string {
   const declined = status === 'declined' || status === 'voided' || status === 'error';
   const title = declined ? 'El pago no se completó' : 'Pago recibido ✓';
@@ -61,22 +69,33 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   let saleId = url.searchParams.get('sale_id');
   const paymentId = url.searchParams.get('payment_id');
+  const providedToken = url.searchParams.get('t') || '';
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
   // Redirect de Wompi trae payment_id (no sale_id). Resolvemos el sale asociado.
   // El sale lo crea el webhook de forma asíncrona, así que puede no existir aún.
+  let paymentMeta: Record<string, unknown> | null = null;
   if (!saleId && paymentId) {
     const { data: pay } = await supabase
       .from('payments')
-      .select('sale_id, status')
+      .select('sale_id, status, metadata')
       .eq('id', paymentId)
       .maybeSingle();
+
+    paymentMeta = (pay?.metadata as Record<string, unknown>) || null;
 
     if (pay?.sale_id) {
       saleId = pay.sale_id;
     } else {
       // Pago recibido pero el recibo aún se está generando (o el pago no se aprobó).
+      // Sólo mostramos la página de "pago recibido" si el token del redirect casa,
+      // para no confirmar la existencia/estado de un payment_id ajeno.
+      const tokenOk = !!paymentMeta?.receipt_token &&
+        timingSafeEqual(providedToken, String(paymentMeta.receipt_token));
+      if (!tokenOk) {
+        return new Response('No autorizado', { status: 403, headers: corsHeaders });
+      }
       return new Response(pendingHtml(pay?.status), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' },
@@ -97,6 +116,42 @@ Deno.serve(async (req) => {
   if (saleErr || !sale) {
     return new Response('Receipt not found', { status: 404, headers: corsHeaders });
   }
+
+  // ── AUTORIZACIÓN ───────────────────────────────────────────────────────────
+  // Un recibo expone PII (nombre, email, teléfono) + financieros. Antes se servía
+  // a cualquiera con el sale_id/payment_id (IDOR). Ahora exigimos una de:
+  //   1) Bearer service_role (n8n / backend confiable).
+  //   2) Token de recibo del redirect de Wompi que casa con el guardado.
+  //   3) Sesión de paciente (portal) que es DUEÑA de este sale.
+  const authHeader = req.headers.get('Authorization') || '';
+  const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+
+  let authorized = false;
+
+  if (bearer && timingSafeEqual(bearer, SERVICE_ROLE)) {
+    authorized = true;
+  }
+
+  if (!authorized && providedToken && paymentMeta?.receipt_token &&
+      timingSafeEqual(providedToken, String(paymentMeta.receipt_token))) {
+    authorized = true;
+  }
+
+  if (!authorized && bearer) {
+    const { data: sess } = await supabase.rpc('patient_session_lookup', { p_token: bearer });
+    const s = Array.isArray(sess) ? sess[0] : sess;
+    if (s?.patient_id && sale.patient_id && s.patient_id === sale.patient_id) {
+      authorized = true;
+    }
+  }
+
+  if (!authorized) {
+    return new Response('No autorizado para ver este recibo', {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
 
   const tenant = sale.tenants || {};
   const patient = sale.patients || {};

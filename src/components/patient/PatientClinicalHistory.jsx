@@ -86,7 +86,7 @@ export default function PatientClinicalHistory() {
       document.body.appendChild(a);
       a.click();
       a.remove();
-    } catch (e) {
+    } catch {
       toast.error('No pudimos descargar el archivo');
     }
   };
@@ -236,7 +236,7 @@ export default function PatientClinicalHistory() {
             <div className="bg-white rounded-xl p-6 max-w-md text-center" onClick={(e) => e.stopPropagation()}>
               <FileText size={32} className="mx-auto text-primary mb-2" />
               <p className="font-semibold mb-1">{previewFile.file_name}</p>
-              <p className="text-xs text-gray-500 mb-4">No se puede previsualizar este tipo de archivo</p>
+              <p className="text-xs text-on-surface-variant mb-4">No se puede previsualizar este tipo de archivo</p>
               <a
                 href={previewUrl}
                 target="_blank"

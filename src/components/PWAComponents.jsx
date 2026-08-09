@@ -27,7 +27,7 @@ export function OfflineIndicator() {
   if (online) return null;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[10001] bg-amber-500 text-white text-sm font-medium py-1.5 px-4 flex items-center justify-center gap-2 shadow-md">
+    <div className="fixed top-0 left-0 right-0 z-[10001] bg-warning text-white text-sm font-medium py-1.5 px-4 flex items-center justify-center gap-2 shadow-md">
       <WifiOff size={14} />
       <span>Sin conexión — viendo datos guardados</span>
     </div>

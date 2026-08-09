@@ -15,7 +15,14 @@ const admin = createClient(SUPABASE_URL, SERVICE_ROLE, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-const PASSWORD = 'Chiropract2026!';
+// La contraseña NO se hardcodea (este repo es público). Se lee de env.
+// Genera una fuerte y única, p.ej.: DEMO_USER_PASSWORD="$(openssl rand -base64 18)"
+const PASSWORD = process.env.DEMO_USER_PASSWORD;
+
+if (!PASSWORD) {
+  console.error('❌ Falta DEMO_USER_PASSWORD — defínela por env, no la escribas en el código.');
+  process.exit(1);
+}
 
 const USERS = [
   // Principal: Dr. Miguel Ángel Díaz (owner del tenant principal)
@@ -172,7 +179,7 @@ async function findOrCreateUser(u) {
   console.log('\n\n╔══════════════════════════════════════════════════════════╗');
   console.log('║                    CREDENCIALES DE PRUEBA                 ║');
   console.log('╚══════════════════════════════════════════════════════════╝');
-  console.log(`\nContraseña común para todos: ${PASSWORD}\n`);
+  console.log('\nContraseña: la definida en DEMO_USER_PASSWORD (no se imprime por seguridad)\n');
   console.log('Usuarios:');
   results.forEach((r) => console.log(`  • ${r.email.padEnd(35)} → ${r.role}`));
   console.log('\nLogin en: https://chiropract-co-mauve.vercel.app/#crm');

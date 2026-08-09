@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CreditCard, Copy, Check, MessageCircle, Loader2, X } from 'lucide-react';
-import { usePayments } from '../hooks/useTenantData';
+import { usePayments, DEFAULT_PAYMENT_PROVIDER } from '../hooks/useTenantData';
 import { formatCOP } from '../utils/format';
 import { whatsappUrl } from '../lib/clinic';
 import { userFriendlyError } from '../lib/logger';
@@ -23,7 +23,9 @@ export default function PaymentLinkButton({
   customerEmail,
   className = '',
   label = 'Generar link de pago',
+  provider = DEFAULT_PAYMENT_PROVIDER,
 }) {
+  const providerName = provider === 'wompi' ? 'Wompi' : 'Bold';
   const { createPaymentLink } = usePayments();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -46,6 +48,7 @@ export default function PaymentLinkButton({
       jornadaId,
       customerEmail,
       customerPhone,
+      provider,
     });
     setLoading(false);
     if (result.error) {
@@ -98,7 +101,7 @@ export default function PaymentLinkButton({
           <div className="bg-surface-container-lowest rounded-2xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between p-5 border-b border-outline-variant">
               <h3 className="font-semibold text-on-surface flex items-center gap-2">
-                <CreditCard size={18} /> Link de pago Wompi
+                <CreditCard size={18} /> Link de pago {providerName}
               </h3>
               <button onClick={handleClose} className="text-on-surface-variant hover:text-on-surface">
                 <X size={20} />
@@ -140,10 +143,10 @@ export default function PaymentLinkButton({
 
               {link && (
                 <div className="space-y-3">
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <p className="text-xs font-semibold text-green-900 uppercase tracking-wide">Link generado</p>
-                    <p className="text-xs text-green-800 break-all mt-1">{link.checkout_url}</p>
-                    <p className="text-xs text-green-700 mt-2">Ref: {link.reference}</p>
+                  <div className="bg-[#e0efe8]/70 border border-success/25 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-[#1f6b52] uppercase tracking-wide">Link generado</p>
+                    <p className="text-xs text-[#1f6b52] break-all mt-1">{link.checkout_url}</p>
+                    <p className="text-xs text-[#1f6b52] mt-2">Ref: {link.reference}</p>
                   </div>
 
                   <div className="flex gap-2">

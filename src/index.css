@@ -85,6 +85,27 @@
   /* Radios y sombras editoriales */
   --radius-xl: 1rem;
   --radius-2xl: 1.25rem;
+
+  /* Tipografía fluida — un solo valor sirve de 360px a 2560px.
+     Evita las 3 clases sm:/lg:/xl: repetidas en cada título. */
+  --text-hero: clamp(1.75rem, 1.15rem + 2.4vw, 3rem);
+  --text-hero--line-height: 1.06;
+  --text-title: clamp(1.375rem, 1.1rem + 1.1vw, 2rem);
+  --text-title--line-height: 1.15;
+  --text-metric: clamp(1.5rem, 1.15rem + 1.5vw, 2.25rem);
+  --text-metric--line-height: 1;
+
+  /* Ritmo del shell (lo leen tanto el sidebar como el contenido) */
+  --spacing-rail: 4.75rem;   /* sidebar colapsado */
+  --spacing-nav: 16.5rem;    /* sidebar expandido */
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -94,6 +115,35 @@ body {
   color: var(--color-on-surface);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* El papel no es plano: grano finísimo + veta cálida. Es lo que separa
+     "fondo beige" de "hoja de consultorio". */
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(12, 74, 62, 0.045), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-attachment: fixed;
+}
+
+/* Foco visible y coherente en toda la app (accesibilidad real, no outline del navegador) */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 0.4rem;
+}
+
+/* En móvil, iOS hace zoom si el input mide menos de 16px. Se fija el mínimo. */
+@media (max-width: 767px) {
+  input, select, textarea { font-size: max(16px, 1em); }
+}
+
+/* Respeto a prefers-reduced-motion — regla dura de Invent en todo lo que se mueve */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ── Tipografía editorial ── */
@@ -109,11 +159,22 @@ body {
 }
 .tnum { font-variant-numeric: tabular-nums; }
 
+/* Kicker: el micro-encabezado en versalitas que abre cada pantalla */
+.kicker {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-tertiary-fixed-dim);
+}
+
 /* ── Scrollbar cálido ── */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #d8cfbe; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #c4b9a4; }
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 /* ── Gradiente clínico (pino) ── */
 .clinical-gradient {
@@ -121,6 +182,12 @@ body {
 }
 .amber-gradient {
   background: linear-gradient(135deg, #cc8a46 0%, #b9793b 100%);
+}
+/* Pino profundo con luz: para las superficies oscuras grandes (sidebar, hero) */
+.pine-deep {
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgba(204, 138, 70, 0.16), transparent 55%),
+    linear-gradient(180deg, #0d5144 0%, #0c4a3e 45%, #08382e 100%);
 }
 
 /* ── Superficies con textura sutil (papel) ── */
@@ -141,6 +208,14 @@ body {
 .shadow-clinical-lg { box-shadow: 0 2px 4px rgba(20, 28, 24, 0.05), 0 24px 48px -16px rgba(20, 28, 24, 0.14); }
 .shadow-amber { box-shadow: 0 12px 30px -12px rgba(204, 138, 70, 0.5); }
 .shadow-pine { box-shadow: 0 12px 30px -12px rgba(12, 74, 62, 0.4); }
+/* Elevación al hover: la tarjeta responde sin saltar (sin desplazar el layout) */
+.lift {
+  transition: box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1), transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(20, 28, 24, 0.05), 0 24px 48px -16px rgba(20, 28, 24, 0.16);
+}
 
 /* ── Motivo vertebral (riel de tiempo / divisores) ── */
 .spine-rail {
@@ -157,16 +232,14 @@ body {
 .vertebra-dot--amber { border-color: var(--color-tertiary-fixed-dim); }
 .hairline { border-top: 1px solid var(--color-outline-variant); }
 
-html { scroll-behavior: smooth; }
-
 /* ── Inputs (consistentes entre módulos) ── */
 .input {
   width: 100%;
-  padding: 0.6rem 0.8rem;
+  padding: 0.625rem 0.875rem;
   font-size: 0.875rem;
   background: var(--color-surface-container-lowest);
   border: 1px solid var(--color-outline-variant);
-  border-radius: 0.65rem;
+  border-radius: 0.75rem;
   color: var(--color-on-surface);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -180,3 +253,25 @@ html { scroll-behavior: smooth; }
 /* ── Aparición editorial (page load) ── */
 @keyframes cx-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 .cx-rise { animation: cx-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Barrido de carga (skeletons) */
+@keyframes cx-shimmer { 100% { transform: translateX(100%); } }
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface-container);
+  border-radius: 0.65rem;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: cx-shimmer 1.6s infinite;
+}
+
+/* ── Safe areas (PWA instalada en iPhone: notch arriba, barra gestual abajo) ── */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+.h-safe-nav { height: calc(4rem + env(safe-area-inset-bottom, 0px)); }

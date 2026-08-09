@@ -7,6 +7,7 @@ import {
   bookJornada, cancelAppointment, getSaleDetail,
   requestReschedule, updateProfile,
 } from '../../lib/patientApi';
+import { addDaysStr } from '../../utils/dates';
 
 // ===========================================================================
 // BaseModal — wrapper común
@@ -103,7 +104,7 @@ export function AppointmentDetailModal({ appointment, open, onClose, onCancel, o
         </div>
 
         {!canModify && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex items-start gap-2">
+          <div className="bg-[#f6e7db]/70 border border-warning/30 rounded-xl p-3 text-xs text-[#a85b32] flex items-start gap-2">
             <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
             <span>
               Esta cita no se puede modificar desde el panel.
@@ -133,7 +134,7 @@ export function AppointmentDetailModal({ appointment, open, onClose, onCancel, o
   );
 }
 
-function Row({ icon: Icon, label, value }) {
+function Row({ label, value }) {
   return (
     <div className="flex items-center gap-3">
       <Icon size={16} className="text-on-surface-variant flex-shrink-0" />
@@ -254,8 +255,9 @@ export function RescheduleModal({ token, appointment, open, onClose, onSuccess, 
 
   if (!appointment) return null;
 
-  // Min date = mañana
-  const minDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  // Min date = mañana, en la zona del consultorio. Con toISOString, después de
+  // las 7pm el paciente no podía escoger el día siguiente.
+  const minDate = addDaysStr(1);
 
   return (
     <BaseModal open={open} onClose={onClose} title="Solicitar reagendamiento">

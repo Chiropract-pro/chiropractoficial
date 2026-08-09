@@ -1,8 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { isPasswordRecoveryPending, isSupabaseConfigured } from './lib/supabase';
+import { isDemoMode } from './lib/demo';
+import ErrorBoundary from './components/ErrorBoundary';
+import SetupNotice from './components/SetupNotice';
+import DemoBanner from './components/DemoBanner';
 import { ToastProvider } from './components/Toast';
 import { useIdleTimeout } from './hooks/useIdleTimeout';
-import Sidebar from './components/Sidebar';
+import AppShell from './components/layout/AppShell';
 import Dashboard from './components/Dashboard';
 import Pacientes from './components/Pacientes';
 import Citas from './components/Citas';
@@ -10,6 +16,7 @@ import Jornadas from './components/Jornadas';
 import ProductosServicios from './components/ProductosServicios';
 import Finanzas from './components/Finanzas';
 import Settings from './components/Settings';
+import Reactivacion from './components/reactivacion/Reactivacion';
 import AuthPage from './components/auth/AuthPage';
 import OnboardingPage from './components/auth/OnboardingPage';
 import ResetPasswordPage from './components/auth/ResetPasswordPage';
@@ -42,6 +49,8 @@ import TrialBanner from './components/billing/TrialBanner';
 
 function CRMApp() {
   const [activeModule, setActiveModule] = useState('dashboard');
+  // Paciente a abrir al aterrizar en el módulo (lo fija la paleta ⌘K).
+  const [focusPatient, setFocusPatient] = useState(null);
   const { alerts } = useAlerts();
   const { signOut } = useAuth();
 
@@ -57,8 +66,9 @@ function CRMApp() {
   const renderModule = () => {
     switch (activeModule) {
       case 'dashboard': return <Dashboard onNavigate={setActiveModule} />;
-      case 'pacientes': return <Pacientes />;
+      case 'pacientes': return <Pacientes focusPatient={focusPatient} onFocusHandled={() => setFocusPatient(null)} />;
       case 'citas': return <Citas />;
+      case 'reactivacion': return <Reactivacion />;
       case 'jornadas': return <Jornadas />;
       case 'productos': return <ProductosServicios />;
       case 'finanzas': return <Finanzas />;
@@ -68,35 +78,37 @@ function CRMApp() {
   };
 
   return (
-    <div className="flex min-h-screen bg-surface-container-low">
-      <Sidebar activeModule={activeModule} onNavigate={setActiveModule} alerts={alerts} />
-      <main className="flex-1 lg:ml-0 overflow-auto">
-        <TrialBanner onUpgradeClick={goToPlan} />
-        <div className="p-6 lg:p-8 max-w-6xl mx-auto">
-          {renderModule()}
-        </div>
-      </main>
+    <>
+      <AppShell
+        activeModule={activeModule}
+        onNavigate={setActiveModule}
+        onOpenPatient={setFocusPatient}
+        alertCount={alerts?.length || 0}
+        banner={<><DemoBanner /><TrialBanner onUpgradeClick={goToPlan} /></>}
+      >
+        {renderModule()}
+      </AppShell>
       {warningOpen && (
-        <div className="fixed inset-0 bg-black/50 z-[10000] flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
-            <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4">
+        <div className="fixed inset-0 bg-[#0b120f]/55 backdrop-blur-[2px] z-[10000] flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-clinical-lg max-w-sm w-full p-6 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center mx-auto mb-4">
               <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
             </div>
-            <h3 className="text-lg font-bold text-on-surface mb-2">Su sesión va a expirar</h3>
-            <p className="text-sm text-on-surface-variant mb-1">Por inactividad cerraremos su sesión en:</p>
-            <p className="text-3xl font-bold text-primary mb-5">{Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}</p>
+            <h3 className="font-display text-lg font-semibold text-on-surface mb-2">Tu sesión va a expirar</h3>
+            <p className="text-sm text-on-surface-variant mb-1">Por inactividad cerraremos tu sesión en:</p>
+            <p className="font-display text-3xl font-semibold text-primary mb-5 tnum">{Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}</p>
             <div className="flex gap-2">
-              <button onClick={() => signOut()} className="flex-1 px-4 py-2 border border-outline-variant text-on-surface-variant rounded-lg text-sm font-medium hover:bg-surface-container-low">
+              <button onClick={() => signOut()} className="flex-1 px-4 py-2.5 border border-outline-variant text-on-surface-variant rounded-xl text-sm font-semibold hover:bg-surface-container-low transition-colors">
                 Cerrar sesión
               </button>
-              <button onClick={dismiss} className="flex-1 px-4 py-2 bg-primary text-on-primary rounded-lg text-sm font-medium hover:bg-primary-light">
+              <button onClick={dismiss} className="flex-1 px-4 py-2.5 bg-primary text-on-primary rounded-xl text-sm font-semibold hover:bg-primary-light transition-colors">
                 Sigo aquí
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
@@ -119,6 +131,10 @@ function LandingApp() {
 
 function getViewFromHash() {
   const h = window.location.hash;
+  // El flujo de recuperación manda SIEMPRE: supabase-js limpia el hash al detectar
+  // la sesión, así que sin esta marca el usuario caía dentro de la app ya logueado
+  // y nunca podía fijar su contraseña.
+  if (isPasswordRecoveryPending()) return 'reset-password';
   if (h === '#crm') return 'crm';
   if (h === '#paciente' || h === '#patient') return 'patient';
   if (h.startsWith('#reset-password')) return 'reset-password';
@@ -150,6 +166,17 @@ function AppRouter() {
     window.location.hash = '';
     setView('landing');
   };
+
+  // Los cortes de ruta van DESPUÉS de los hooks: un `return` antes del
+  // useEffect rompe las reglas de hooks (se llamarían en distinto orden según
+  // el modo) y React acaba desincronizando el estado.
+
+  // Demostración: se entra directo al CRM con datos de ejemplo.
+  if (isDemoMode()) return <CRMApp />;
+
+  // Sin credenciales no hay nada que cargar: se explica en vez de mostrar
+  // una pantalla en blanco.
+  if (!isSupabaseConfigured) return <SetupNotice />;
 
   if (loading) {
     return (
@@ -242,14 +269,21 @@ function AppRouter() {
 
 function App() {
   return (
-    <AuthProvider>
-      <ToastProvider>
-        <OfflineIndicator />
-        <AppRouter />
-        <UpdatePrompt />
-        <InstallPrompt />
-      </ToastProvider>
-    </AuthProvider>
+    // reducedMotion="user": quien tenga activado "reducir movimiento" en su
+    // sistema ve la interfaz sin desplazamientos. Regla dura de accesibilidad
+    // en todo lo que se mueve.
+    <ErrorBoundary>
+      <MotionConfig reducedMotion="user">
+        <AuthProvider>
+          <ToastProvider>
+            <OfflineIndicator />
+            <AppRouter />
+            <UpdatePrompt />
+            <InstallPrompt />
+          </ToastProvider>
+        </AuthProvider>
+      </MotionConfig>
+    </ErrorBoundary>
   );
 }
 

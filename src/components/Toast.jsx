@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useState } from 'react';
 import { CheckCircle, AlertCircle, Info, X } from 'lucide-react';
 
 const ToastContext = createContext({ toast: () => {} });
@@ -47,8 +47,8 @@ export function ToastProvider({ children }) {
 
 function ToastItem({ item, onClose }) {
   const styles = {
-    success: 'bg-green-50 border-green-200 text-green-900',
-    error: 'bg-red-50 border-red-200 text-red-900',
+    success: 'bg-[#e0efe8]/70 border-success/25 text-[#1f6b52]',
+    error: 'bg-[#f6ddd3]/70 border-danger/25 text-[#a03a22]',
     info: 'bg-surface-container-lowest border-outline-variant text-on-surface',
   };
   const Icon = item.type === 'success' ? CheckCircle : item.type === 'error' ? AlertCircle : Info;

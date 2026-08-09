@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, clearPasswordRecovery } from '../../lib/supabase';
 import { Loader2, Lock, CheckCircle, AlertCircle } from 'lucide-react';
 
 const CLINIC_NAME = import.meta.env.VITE_CLINIC_NAME || 'chiropract.co';
@@ -47,6 +47,7 @@ export default function ResetPasswordPage({ onDone }) {
       const { error: updErr } = await supabase.auth.updateUser({ password });
       if (updErr) throw updErr;
       setDone(true);
+      clearPasswordRecovery();   // el flujo terminó: liberar la ruta
       // Tras cambiar, cerramos la sesión de recovery y mandamos al login limpio.
       setTimeout(async () => {
         await supabase.auth.signOut().catch(() => {});

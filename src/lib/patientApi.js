@@ -55,7 +55,7 @@ async function fnFetch(path, { method = 'GET', body, token } = {}) {
       headers,
       body: body ? JSON.stringify(body) : undefined,
     });
-  } catch (e) {
+  } catch {
     throw new Error('Sin conexión. Verifica tu internet.');
   }
 
@@ -173,6 +173,19 @@ export async function getFileUrl(token, fileId) {
   return fnFetch('/patient-me', {
     method: 'POST',
     body: { action: 'get_file_url', file_id: fileId },
+    token,
+  });
+}
+
+/**
+ * Genera un link de pago para que el paciente salde su deuda desde el portal.
+ * El monto NO se manda desde aquí: el servidor lee `balance_due` del paciente
+ * (si se envía `amount`, es un abono parcial y se valida contra el saldo real).
+ */
+export async function payMyBalance(token, amount) {
+  return fnFetch('/patient-pay-balance', {
+    method: 'POST',
+    body: amount ? { amount } : {},
     token,
   });
 }

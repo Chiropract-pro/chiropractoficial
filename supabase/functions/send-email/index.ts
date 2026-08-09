@@ -65,9 +65,13 @@ Deno.serve(async (req) => {
   if (!type || !to) return json({ error: 'Faltan campos: type y to' }, 400);
 
   // ---- Autorización ----
+  // Nivel servicio: la service_role (llamadas internas, p.ej. notifications-dispatch)
+  // o CRON_SECRET, un secreto dedicado de menor privilegio para cron y para
+  // operar/probar desde fuera sin exponer la llave maestra.
   const auth = req.headers.get('Authorization') || '';
   const token = auth.replace(/^Bearer\s+/i, '');
-  const isService = token && token === SERVICE_ROLE;
+  const CRON_SECRET = Deno.env.get('CRON_SECRET') || '';
+  const isService = !!token && (token === SERVICE_ROLE || (!!CRON_SECRET && token === CRON_SECRET));
 
   if (!isService) {
     // Debe ser un JWT de usuario válido y el tipo debe estar permitido.

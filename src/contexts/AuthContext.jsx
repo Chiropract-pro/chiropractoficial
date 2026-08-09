@@ -1,6 +1,9 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
+import { isDemoMode, DEMO_PROFILE, DEMO_TENANT } from '../lib/demo';
+
+const DEMO = isDemoMode();
 
 const AuthContext = createContext({});
 
@@ -11,14 +14,17 @@ export const useAuth = () => useContext(AuthContext);
 const SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [tenant, setTenant] = useState(null);
-  const [membership, setMembership] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // En modo demostración se entra directo con un consultorio de ejemplo: sin
+  // credenciales, sin red y sin tocar la base.
+  const [user, setUser] = useState(DEMO ? { id: DEMO_PROFILE.id, email: DEMO_PROFILE.email } : null);
+  const [profile, setProfile] = useState(DEMO ? DEMO_PROFILE : null);
+  const [tenant, setTenant] = useState(DEMO ? DEMO_TENANT : null);
+  const [membership, setMembership] = useState(DEMO ? { role: 'owner' } : null);
+  const [loading, setLoading] = useState(!DEMO);
   const [tenantLoading, setTenantLoading] = useState(false);
 
   useEffect(() => {
+    if (DEMO) return undefined;
     let lastLoadedUserId = null;
     let mounted = true;
 
@@ -54,7 +60,7 @@ export function AuthProvider({ children }) {
     return () => { mounted = false; subscription.unsubscribe(); };
   }, []);
 
-  const ensureProfile = async (userId, fullName, email) => {
+  const ensureProfile = async (userId, fullName) => {
     const { data: existing } = await supabase
       .from('profiles')
       .select('id')

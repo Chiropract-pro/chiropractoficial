@@ -17,6 +17,30 @@ dist-ssr
 .env.local
 .env.*.local
 
+# ⚠️ CREDENCIALES — NUNCA VERSIONAR (este repo es PUBLICO)
+# Llaves de pasarelas (Bold, Wompi), service_role de Supabase, tokens.
+# Una llave publicada queda en el historial y en los mirrors: hay que rotarla, no basta con borrarla.
+credenciales*
+credentials*
+secretos*
+secrets*
+*.pem
+*.p12
+*.key
+!public/**/*.key
+
+# ⚠️ DATOS DE PACIENTES — NUNCA VERSIONAR
+# Este repo es PUBLICO. Estas rutas contienen historia clinica real
+# (nombre + telefono + diagnostico) = datos sensibles bajo Ley 1581/2012.
+# Publicarlos no se deshace: quedan en el historial de git y en los mirrors.
+importacion clientes/
+importacion*/
+*.pdf
+pacientes.json
+citas.json
+revisar.json
+extraido_*.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -39,3 +63,6 @@ supabase/.branches/
 # Claude Code / preview local config
 .claude/
 session.json
+
+# Estado local de herramientas de agentes — no versionar
+.claude-flow/

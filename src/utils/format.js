@@ -12,12 +12,14 @@ export function formatDate(dateStr) {
   if (!dateStr) return '—';
   const date = new Date(dateStr + 'T00:00:00');
   if (isNaN(date.getTime())) return '—';
-  return date.toLocaleDateString('es-CO', {
+  const out = date.toLocaleDateString('es-CO', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
+  // es-CO devuelve el día en minúscula; estas fechas encabezan paneles.
+  return out.charAt(0).toUpperCase() + out.slice(1);
 }
 
 export function formatShortDate(dateStr) {

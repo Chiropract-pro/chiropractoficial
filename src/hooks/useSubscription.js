@@ -15,7 +15,7 @@ export function useSubscription() {
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
-    if (!tenant?.id) return;
+    if (!tenant?.id) { setLoading(false); return; }
     setLoading(true);
     try {
       const [{ data: sub }, { data: ps }] = await Promise.all([

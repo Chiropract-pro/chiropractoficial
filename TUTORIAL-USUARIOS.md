@@ -13,7 +13,7 @@
 | 👩‍⚕️ **Dra. María González** | Doctor | `dra.maria@chiropract.co` | Quiropraxia Dr. Díaz |
 | 🧪 **Demo Owner** | Owner | `demo@chiropract.co` | Consultorio Demo |
 
-**Contraseña común para los 4**: `Chiropract2026!`
+**Contraseña común para los 4**: _(no se versiona — pídela al administrador; se define vía `DEMO_USER_PASSWORD` al crear los usuarios)_
 
 🌐 **URL de login**: https://chiropract-co-mauve.vercel.app/#crm
 
@@ -34,7 +34,7 @@
 1. **Entrar a** https://chiropract-co-mauve.vercel.app/#crm
 2. **Login**:
    - Email: `miguel@chiropract.co`
-   - Password: `Chiropract2026!`
+   - Password: `<contraseña — pídela al administrador>`
 3. **Verás el Dashboard** con KPIs (pacientes, citas, ingresos, conversión)
 4. **Click en "Pacientes"** → ve la lista (cargados desde semilla)
    - Click en cualquier paciente para ver el detalle
@@ -63,7 +63,7 @@
 1. **Cierra sesión** del usuario anterior (botón sign-out en sidebar)
 2. **Login**:
    - Email: `recepcion@chiropract.co`
-   - Password: `Chiropract2026!`
+   - Password: `<contraseña — pídela al administrador>`
 3. **Verás el mismo CRM** del Dr. Díaz porque es admin del mismo tenant
 4. **Confirmar citas**:
    - Click en "Citas" → vista "Pendientes"
@@ -90,7 +90,7 @@
 
 1. **Login**:
    - Email: `dra.maria@chiropract.co`
-   - Password: `Chiropract2026!`
+   - Password: `<contraseña — pídela al administrador>`
 2. **Ver el Dashboard del consultorio compartido**
 3. **Click en "Citas"** — ve TODA la agenda (también las del Dr. Miguel) — esto es porque las RLS policies son por tenant, no por doctor individual. Es por diseño: el doctor secundario ve el calendario completo.
 4. **Click en "Pacientes"** — mismos pacientes del consultorio
@@ -110,7 +110,7 @@
 
 1. **Login**:
    - Email: `demo@chiropract.co`
-   - Password: `Chiropract2026!`
+   - Password: `<contraseña — pídela al administrador>`
 2. **El tenant "Consultorio Demo" está vacío** (sin pacientes, sin citas, sin nada)
 3. Demuestra el flujo desde cero:
    - "+ Nuevo Paciente" → agrega 1-2
@@ -229,7 +229,7 @@ Cuando el sistema esté en uso real:
 
 | Problema | Solución |
 |---|---|
-| "Email o contraseña incorrectos" | Revisa que el password sea exacto: `Chiropract2026!` (con C mayúscula y `!`) |
+| "Email o contraseña incorrectos" | Revisa que el password sea exacto: `<contraseña — pídela al administrador>` (con C mayúscula y `!`) |
 | El email no llega al hacer signup | Configurar Supabase Site URL primero |
 | El bot WhatsApp no responde | Verificar que el WhatsApp del Dr. Díaz siga conectado en Evolution |
 | Página en blanco al entrar | Hard refresh (Ctrl+Shift+R o Cmd+Shift+R) |
@@ -237,4 +237,4 @@ Cuando el sistema esté en uso real:
 
 ---
 
-**¿Listo? Login con `miguel@chiropract.co` / `Chiropract2026!` y arranca el flujo 1.** 🚀
+**¿Listo? Login con `miguel@chiropract.co` / `<contraseña — pídela al administrador>` y arranca el flujo 1.** 🚀

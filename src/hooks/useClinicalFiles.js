@@ -16,7 +16,7 @@ function inferKind(mimeType) {
 
 function sanitizeFileName(name) {
   // Remove path traversal attempts; keep readable name
-  return String(name || 'file').replace(/[^\w.\-]/g, '_').slice(0, 120);
+  return String(name || 'file').replace(/[^\w.-]/g, '_').slice(0, 120);
 }
 
 /**
@@ -29,7 +29,7 @@ export function useClinicalFiles(patientId) {
   const [uploading, setUploading] = useState(false);
 
   const reload = useCallback(async () => {
-    if (!tenant?.id) return;
+    if (!tenant?.id) { setLoading(false); return; }
     setLoading(true);
     try {
       let query = supabase

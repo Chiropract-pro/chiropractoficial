@@ -101,7 +101,7 @@ export default function ClinicalFilesPanel({ patient, clinicalRecordId = null })
       document.body.appendChild(a);
       a.click();
       a.remove();
-    } catch (e) {
+    } catch {
       toast.error('No pudimos descargar el archivo');
     }
   };

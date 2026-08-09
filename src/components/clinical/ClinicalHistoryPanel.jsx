@@ -29,7 +29,7 @@ function formatDate(d) {
  * Lista los records SOAP y permite crear/editar.
  */
 export default function ClinicalHistoryPanel({ patient }) {
-  const { records, loading, archive } = useClinicalRecords(patient?.id);
+  const { records, loading, archive, reload } = useClinicalRecords(patient?.id);
   const toast = useToast();
   const [editing, setEditing] = useState(null); // null | 'new' | recordObject
   const [expandedId, setExpandedId] = useState(null);
@@ -225,7 +225,9 @@ export default function ClinicalHistoryPanel({ patient }) {
         existingRecord={editing && editing !== 'new' ? editing : null}
         open={!!editing}
         onClose={() => setEditing(null)}
-        onSaved={() => setEditing(null)}
+        // Sin este reload, el panel seguía mostrando "0 notas SOAP" tras guardar
+        // (el modal tiene su propia instancia del hook) y parecía pérdida de datos.
+        onSaved={() => { setEditing(null); reload(); }}
       />
     </div>
   );

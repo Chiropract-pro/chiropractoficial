@@ -118,8 +118,8 @@ export default function BillingSettings() {
           config.is_active && config.last_test_ok
             ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
             : config.last_test_ok === false
-            ? 'bg-amber-50 border-amber-200 text-amber-900'
-            : 'bg-blue-50 border-blue-200 text-blue-900'
+            ? 'bg-[#f6e7db]/70 border-warning/30 text-[#a85b32]'
+            : 'bg-[#e0e9f1]/70 border-info/25 text-[#3a5a78]'
         }`}>
           {config.is_active && config.last_test_ok ? <CheckCircle size={18} className="mt-0.5 flex-shrink-0" />
             : config.last_test_ok === false ? <AlertTriangle size={18} className="mt-0.5 flex-shrink-0" />
@@ -210,7 +210,7 @@ export default function BillingSettings() {
             <div className={`mt-3 rounded-lg p-3 border text-sm ${
               testResult.ok
                 ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                : 'bg-red-50 border-red-200 text-red-900'
+                : 'bg-[#f6ddd3]/70 border-danger/25 text-[#a03a22]'
             }`}>
               {testResult.ok ? (
                 <>
@@ -313,7 +313,7 @@ export default function BillingSettings() {
                   onClick={() => update('test_mode', true)}
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-semibold border transition-colors ${
                     form.test_mode
-                      ? 'bg-amber-100 border-amber-300 text-amber-900'
+                      ? 'bg-[#f6e7db] border-warning/40 text-[#a85b32]'
                       : 'border-outline-variant text-on-surface-variant hover:bg-surface-container-low'
                   }`}
                 >

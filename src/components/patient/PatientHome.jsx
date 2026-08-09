@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { usePatientAuth } from '../../contexts/PatientAuthContext';
 import { useToast } from '../Toast';
-import { listJornadas } from '../../lib/patientApi';
+import { listJornadas, payMyBalance } from '../../lib/patientApi';
 import {
   AppointmentDetailModal, BookJornadaModal, CancelAppointmentModal,
   EditProfileModal, RescheduleModal, SaleDetailModal,
@@ -22,9 +22,9 @@ const APPOINTMENT_TYPE_LABEL = {
 };
 
 const STATUS_BADGE = {
-  pendiente: 'bg-amber-100 text-amber-800',
+  pendiente: 'bg-[#f6e7db] text-[#a85b32]',
   confirmada: 'bg-emerald-100 text-emerald-800',
-  cancelada: 'bg-red-100 text-red-800',
+  cancelada: 'bg-[#f6ddd3] text-[#a03a22]',
   completada: 'bg-slate-100 text-slate-700',
 };
 
@@ -65,7 +65,8 @@ export default function PatientHome() {
 
   // Jornadas (lazy load — solo si la sección está montada)
   const [jornadas, setJornadas] = useState(null);
-  const [loadingJornadas, setLoadingJornadas] = useState(false);
+  const [payingBalance, setPayingBalance] = useState(false);
+  const [, setLoadingJornadas] = useState(false);
 
   useEffect(() => {
     if (!session?.session_token) return;
@@ -104,6 +105,27 @@ export default function PatientHome() {
   const appointments = dashboard?.upcoming_appointments || [];
   const sales = dashboard?.recent_sales || [];
   const pending = dashboard?.pending_payments || [];
+
+  const balanceDue = Number(patient.balance_due || 0);
+
+  // El paciente paga su saldo sin intermediarios. El monto lo calcula el
+  // servidor desde `balance_due` (nunca se manda desde el navegador).
+  const handlePayBalance = async () => {
+    if (!session?.session_token || payingBalance) return;
+    setPayingBalance(true);
+    try {
+      const res = await payMyBalance(session.session_token);
+      if (res?.checkout_url) {
+        window.open(res.checkout_url, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error('No se pudo generar el link de pago. Intenta de nuevo.');
+      }
+    } catch (e) {
+      toast.error(e?.message || 'No se pudo generar el link de pago.');
+    } finally {
+      setPayingBalance(false);
+    }
+  };
 
   const onActionSuccess = (msg) => {
     toast.success(msg);
@@ -189,6 +211,35 @@ export default function PatientHome() {
           </div>
         </section>
 
+        {/* Saldo pendiente — el paciente lo paga solo, sin pedirlo al consultorio */}
+        {balanceDue > 0 && (
+          <section>
+            <h2 className="text-sm font-bold text-on-surface uppercase tracking-wide mb-2 px-1 flex items-center gap-2">
+              <CreditCard size={14} />
+              Tu saldo
+            </h2>
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm text-rose-900/80">Saldo pendiente</p>
+                  <p className="text-2xl font-bold text-rose-900">{formatCOP(balanceDue)}</p>
+                </div>
+                <button
+                  onClick={handlePayBalance}
+                  disabled={payingBalance}
+                  className="bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-1.5 whitespace-nowrap"
+                >
+                  {payingBalance ? 'Generando…' : 'Pagar ahora'}
+                  {!payingBalance && <ExternalLink size={14} />}
+                </button>
+              </div>
+              <p className="text-[11px] text-rose-900/60 mt-2">
+                Pago seguro con tarjeta, PSE o Nequi. Al confirmarse, tu saldo se actualiza automáticamente.
+              </p>
+            </div>
+          </section>
+        )}
+
         {/* Pagos pendientes */}
         {pending.length > 0 && (
           <section>
@@ -200,18 +251,18 @@ export default function PatientHome() {
               {pending.map((p) => (
                 <div
                   key={p.id}
-                  className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between gap-3"
+                  className="bg-[#f6e7db]/70 border border-warning/30 rounded-xl p-4 flex items-center justify-between gap-3"
                 >
                   <div className="min-w-0">
                     <p className="font-semibold text-on-surface text-sm truncate">{p.description || 'Pago pendiente'}</p>
-                    <p className="text-lg font-bold text-amber-900">{formatCOP(p.amount)}</p>
+                    <p className="text-lg font-bold text-[#a85b32]">{formatCOP(p.amount)}</p>
                   </div>
                   {p.payment_url && (
                     <a
                       href={p.payment_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-1.5 whitespace-nowrap"
+                      className="bg-[#b9793b] hover:bg-[#a06a33] text-white px-4 py-2.5 rounded-lg text-sm font-bold flex items-center gap-1.5 whitespace-nowrap"
                     >
                       Pagar
                       <ExternalLink size={14} />

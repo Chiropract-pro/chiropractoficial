@@ -128,10 +128,12 @@ Deno.serve(async (req) => {
       );
     }
 
+    // NO devolvemos patient_name: es PII de salud y quien llama todavía NO ha
+    // demostrado ser el dueño del número (aún no verificó el código). El nombre
+    // sí va dentro del mensaje de WhatsApp, que solo recibe ese teléfono.
     return jsonResponse({
       ok: true,
       expires_at: otp.expires_at,
-      patient_name: otp.patient_name || null,
     });
   } catch (e) {
     console.error('patient-otp-request fatal', e);

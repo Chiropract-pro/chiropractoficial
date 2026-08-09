@@ -23,12 +23,12 @@ const STATUS_LABEL = {
 };
 
 const STATUS_COLOR = {
-  trial: 'bg-amber-100 text-amber-900',
-  pending_payment: 'bg-blue-100 text-blue-900',
+  trial: 'bg-[#f6e7db] text-[#a85b32]',
+  pending_payment: 'bg-[#e0e9f1] text-[#3a5a78]',
   active: 'bg-emerald-100 text-emerald-900',
-  past_due: 'bg-red-100 text-red-900',
+  past_due: 'bg-[#f6ddd3] text-[#a03a22]',
   cancelled: 'bg-slate-100 text-slate-700',
-  expired: 'bg-red-100 text-red-900',
+  expired: 'bg-[#f6ddd3] text-[#a03a22]',
 };
 
 export default function PlanTab() {
@@ -44,16 +44,34 @@ export default function PlanTab() {
 
   if (loading) {
     return (
-      <div className="bg-surface-container-lowest rounded-xl p-8 flex justify-center">
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-8 flex justify-center">
         <Loader2 size={28} className="animate-spin text-primary" />
       </div>
     );
   }
 
+  // Terminó de cargar y no hay suscripción: eso no es "cargando". Antes decía
+  // "Cargando información de plan..." para siempre y el consultorio quedaba
+  // atrapado ahí, sin manera de contratar.
   if (!subscription) {
     return (
-      <div className="bg-surface-container-lowest rounded-xl p-6 text-center">
-        <p className="text-on-surface-variant">Cargando información de plan...</p>
+      <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl p-8 text-center shadow-clinical">
+        <div className="w-12 h-12 rounded-2xl bg-tertiary-container flex items-center justify-center mx-auto mb-4">
+          <Sparkles size={22} className="text-on-tertiary-container" />
+        </div>
+        <h3 className="font-display text-lg font-semibold text-on-surface">Sin plan activo</h3>
+        <p className="text-sm text-on-surface-variant mt-1.5 max-w-sm mx-auto">
+          Este consultorio todavía no tiene una suscripción registrada.
+          {isOwner
+            ? ' Elige un plan abajo para activarlo.'
+            : ' Pídele al dueño del consultorio que active uno.'}
+        </p>
+        <button
+          onClick={reload}
+          className="mt-5 text-xs font-semibold text-primary hover:underline"
+        >
+          Volver a consultar
+        </button>
       </div>
     );
   }
@@ -117,7 +135,7 @@ export default function PlanTab() {
           {subscription.status === 'trial' && (
             <p>
               Tu prueba <b>termina en {days} día{days === 1 ? '' : 's'}</b> ({new Date(subscription.current_period_end).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}).
-              {days <= 5 && <span className="text-amber-700 font-semibold"> Activa un plan para no perder acceso.</span>}
+              {days <= 5 && <span className="text-[#a85b32] font-semibold"> Activa un plan para no perder acceso.</span>}
             </p>
           )}
           {subscription.status === 'active' && !subscription.cancel_at_period_end && (
@@ -127,13 +145,13 @@ export default function PlanTab() {
             </p>
           )}
           {subscription.cancel_at_period_end && (
-            <p className="text-amber-900">
+            <p className="text-[#a85b32]">
               ⚠ Tu suscripción está programada para cancelarse el{' '}
               <b>{new Date(subscription.current_period_end).toLocaleDateString('es-CO')}</b>.
             </p>
           )}
           {subscription.status === 'pending_payment' && (
-            <p className="text-blue-900">
+            <p className="text-[#3a5a78]">
               Tienes un pago pendiente para activar el plan. Si pagaste hace poco, espera unos minutos a la confirmación.
             </p>
           )}
@@ -269,7 +287,7 @@ export default function PlanTab() {
       )}
 
       {!isOwner && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900 flex items-start gap-2">
+        <div className="bg-[#f6e7db]/70 border border-warning/30 rounded-xl p-4 text-sm text-[#a85b32] flex items-start gap-2">
           <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />
           <span>Solo el owner del consultorio puede cambiar el plan o ver detalles de facturación.</span>
         </div>
@@ -278,7 +296,7 @@ export default function PlanTab() {
   );
 }
 
-function LimitCard({ icon: Icon, label, max, value }) {
+function LimitCard({ label, max, value }) {
   return (
     <div className="bg-surface-container-low rounded-lg p-3">
       <Icon size={14} className="mx-auto text-primary mb-1" />

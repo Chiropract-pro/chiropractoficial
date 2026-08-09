@@ -109,7 +109,7 @@ export default function PublicProfileTab() {
                 <h3 className="font-bold text-on-surface">{form.title} {form.full_name}</h3>
                 {profile?.verified
                   ? <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-semibold px-2 py-0.5 rounded-full"><BadgeCheck size={13} /> Verificado</span>
-                  : <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full"><ShieldQuestion size={13} /> Sin verificar</span>}
+                  : <span className="inline-flex items-center gap-1 bg-[#f6e7db] text-[#a85b32] text-xs font-semibold px-2 py-0.5 rounded-full"><ShieldQuestion size={13} /> Sin verificar</span>}
               </div>
               <p className="text-xs text-on-surface-variant mt-0.5">
                 chiropract.co/#dr/{profile?.slug}
@@ -146,7 +146,7 @@ export default function PublicProfileTab() {
         </div>
 
         {!profile?.verified && (
-          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+          <div className="mt-4 bg-[#f6e7db]/70 border border-warning/30 rounded-lg p-3 text-xs text-[#a85b32]">
             Tu perfil aún no está verificado. Para obtener la insignia azul y poder publicar en la comunidad,
             completa tu información y el equipo de chiropract.co la revisará.
           </div>

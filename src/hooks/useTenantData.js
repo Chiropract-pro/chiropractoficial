@@ -2,15 +2,31 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../lib/logger';
+import { todayStr } from '../utils/dates';
+import { isDemoMode, DEMO_TABLES, DEMO_SALES } from '../lib/demo';
+
+// Pasarela de pago por defecto. Se puede cambiar sin tocar código con
+// VITE_PAYMENT_PROVIDER=wompi en el entorno.
+export const DEFAULT_PAYMENT_PROVIDER = import.meta.env.VITE_PAYMENT_PROVIDER || 'bold';
+
+const DEMO = isDemoMode();
+let demoSeq = 1;
 
 export function useTenantData(table, options = {}) {
   const { tenant } = useAuth();
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // En demostración los datos viven en memoria: se pueden crear y editar (para
+  // enseñar el flujo completo) pero nada sale del navegador.
+  const [data, setData] = useState(() => (DEMO ? [...(DEMO_TABLES[table] || [])] : []));
+  const [loading, setLoading] = useState(!DEMO);
   const [error, setError] = useState(null);
 
   const fetchAll = useCallback(async () => {
-    if (!tenant?.id) return;
+    if (DEMO) return;
+    // Sin tenant no hay nada que cargar, pero hay que APAGAR el indicador igual.
+    // Con un `return` seco, `loading` se quedaba en `true` para siempre y la
+    // pantalla mostraba "Cargando…" eterno cada vez que el tenant tardaba,
+    // fallaba, o el usuario todavía no tenía uno asignado.
+    if (!tenant?.id) { setLoading(false); return; }
     setLoading(true);
     setError(null);
     try {
@@ -48,6 +64,11 @@ export function useTenantData(table, options = {}) {
   }, [fetchAll]);
 
   const insert = async (record) => {
+    if (DEMO) {
+      const row = { ...record, id: `demo-new-${demoSeq++}`, created_at: new Date().toISOString() };
+      setData((prev) => [row, ...prev]);
+      return { data: row };
+    }
     if (!tenant?.id) return { error: 'No tenant' };
     const { data: row, error: insertError } = await supabase
       .from(table)
@@ -63,6 +84,11 @@ export function useTenantData(table, options = {}) {
   };
 
   const update = async (id, updates) => {
+    if (DEMO) {
+      let row = null;
+      setData((prev) => prev.map((r) => (r.id === id ? (row = { ...r, ...updates }) : r)));
+      return { data: row };
+    }
     const { data: row, error: updateError } = await supabase
       .from(table)
       .update(updates)
@@ -78,6 +104,10 @@ export function useTenantData(table, options = {}) {
   };
 
   const remove = async (id) => {
+    if (DEMO) {
+      setData((prev) => prev.filter((r) => r.id !== id));
+      return { success: true };
+    }
     const { error: deleteError } = await supabase
       .from(table)
       .delete()
@@ -100,6 +130,7 @@ export function usePatients() {
 
   // Wrapper insertPatient con check de plan limit
   const insertPatient = async (record) => {
+    if (DEMO) return insert(record);
     try {
       const { data: limit } = await supabase.rpc('tenant_check_plan_limit', {
         p_tenant_id: record.tenant_id || (await supabase.from('tenants').select('id').limit(1).maybeSingle()).data?.id,
@@ -188,6 +219,7 @@ export function useJornadaOfferings(jornadaId) {
   const [error, setError] = useState(null);
 
   const fetchOfferings = useCallback(async () => {
+    if (DEMO) { setLoading(false); return; }
     if (!tenant?.id || !jornadaId) {
       setOfferings([]);
       setLoading(false);
@@ -256,18 +288,19 @@ export function useJornadaOfferings(jornadaId) {
 
 export function useSales() {
   const { tenant } = useAuth();
-  const [sales, setSales] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [sales, setSales] = useState(() => (DEMO ? [...DEMO_SALES] : []));
+  const [loading, setLoading] = useState(!DEMO);
   const [error, setError] = useState(null);
 
   const fetchSales = useCallback(async () => {
-    if (!tenant?.id) return;
+    if (DEMO) return;
+    if (!tenant?.id) { setLoading(false); return; }
     setLoading(true);
     setError(null);
     try {
       const { data, error: fetchError } = await supabase
         .from('sales')
-        .select('*, sale_items(*), patients(full_name), jornadas(city, date)')
+        .select('*, sale_items(*), patients(full_name, phone, email), jornadas(city, date)')
         .eq('tenant_id', tenant.id)
         .order('date', { ascending: false });
       if (fetchError) throw fetchError;
@@ -285,6 +318,21 @@ export function useSales() {
   }, [fetchSales]);
 
   const createSale = async ({ jornadaId = null, patientId = null, appointmentId = null, items, paymentMethod = 'efectivo', notes = '', date = null }) => {
+    if (DEMO) {
+      const sale = {
+        id: `demo-sale-${demoSeq++}`,
+        total: items.reduce((s, i) => s + i.subtotal, 0),
+        status: 'completada',
+        payment_method: paymentMethod,
+        date: date || todayStr(),
+        notes,
+        patients: null,
+        jornadas: null,
+        sale_items: items.map((i, n) => ({ id: `dsi${n}`, quantity: i.quantity, item_name: i.name, item_type: i.itemType, subtotal: i.subtotal })),
+      };
+      setSales((prev) => [sale, ...prev]);
+      return { data: sale };
+    }
     if (!tenant?.id) return { error: 'No tenant' };
     if (!items || items.length === 0) return { error: 'Debe haber al menos un item' };
 
@@ -300,7 +348,9 @@ export function useSales() {
         total,
         payment_method: paymentMethod,
         notes,
-        date: date || new Date().toISOString().slice(0, 10),
+        // Fecha del consultorio (UTC-5): con toISOString, una venta hecha
+        // después de las 7pm quedaba registrada con la fecha del día siguiente.
+        date: date || todayStr(),
       })
       .select()
       .single();
@@ -345,6 +395,10 @@ export function useSales() {
   };
 
   const cancelSale = async (id) => {
+    if (DEMO) {
+      setSales((prev) => prev.map((s) => (s.id === id ? { ...s, status: 'cancelada' } : s)));
+      return { data: { id, status: 'cancelada' } };
+    }
     const { data, error: updateError } = await supabase
       .from('sales')
       .update({ status: 'cancelada' })
@@ -365,11 +419,12 @@ export function useSales() {
 export function usePayments() {
   const { tenant } = useAuth();
   const [payments, setPayments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!DEMO);
   const [error, setError] = useState(null);
 
   const fetchPayments = useCallback(async () => {
-    if (!tenant?.id) return;
+    if (DEMO) return;
+    if (!tenant?.id) { setLoading(false); return; }
     setLoading(true);
     try {
       const { data, error: fetchError } = await supabase
@@ -392,11 +447,18 @@ export function usePayments() {
     fetchPayments();
   }, [fetchPayments]);
 
-  // Genera un link de pago Wompi llamando a la Edge Function
-  const createPaymentLink = async ({ amount, description, patientId, appointmentId, jornadaId, customerEmail, customerPhone }) => {
+  // Genera un link de pago llamando a la Edge Function de la pasarela.
+  // `provider`: 'bold' (default) | 'wompi'. Ambas escriben en la misma tabla
+  // `payments`, así que el CRM ve todos los cobros juntos sin importar la pasarela.
+  const createPaymentLink = async ({ amount, description, patientId, appointmentId, jornadaId, customerEmail, customerPhone, provider = DEFAULT_PAYMENT_PROVIDER }) => {
+    if (DEMO) {
+      // En demostración no se golpea la pasarela real.
+      return { data: { url: 'https://checkout.bold.co/demo', payment_link: 'demo' } };
+    }
     if (!tenant?.id) return { error: { message: 'No tenant' } };
+    const fn = provider === 'wompi' ? 'wompi-create-link' : 'bold-create-link';
     try {
-      const { data, error } = await supabase.functions.invoke('wompi-create-link', {
+      const { data, error } = await supabase.functions.invoke(fn, {
         body: {
           tenant_id: tenant.id,
           amount,

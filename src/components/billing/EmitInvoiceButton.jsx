@@ -54,7 +54,7 @@ export default function EmitInvoiceButton({ sale, onEmitted, compact = false }) 
       <button
         onClick={() => handleEmit()}
         disabled={loading}
-        className="text-xs bg-red-50 text-red-700 hover:bg-red-100 px-2 py-1 rounded-full font-semibold flex items-center gap-1"
+        className="text-xs bg-[#f6ddd3]/70 text-[#a03a22] hover:bg-[#f0cfc1] px-2 py-1 rounded-full font-semibold flex items-center gap-1"
         title={sale.e_invoice_error || 'Falló — reintenta'}
       >
         {loading ? <Loader2 size={11} className="animate-spin" /> : <AlertCircle size={11} />}

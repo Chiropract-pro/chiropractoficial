@@ -1,84 +1,129 @@
-import { useState } from 'react';
-import { TrendingUp, AlertTriangle, Building2, MapPin, ArrowUpRight, ArrowDownRight, Plus, X, Download } from 'lucide-react';
-import { formatCOP } from '../utils/format';
-import { useTransactions, useAppointments, usePatients } from '../hooks/useTenantData';
+import { useMemo, useState } from 'react';
+import {
+  AlertTriangle, Building2, CalendarRange, Download, MapPin, Plus, Target, TrendingUp, Wallet,
+} from 'lucide-react';
+import { formatCOP, formatDate } from '../utils/format';
+import { useTransactions, usePatients } from '../hooks/useTenantData';
 import { useToast } from './Toast';
 import { userFriendlyError } from '../lib/logger';
 import LoadingState from './LoadingState';
 import { downloadCsv } from '../utils/csv';
+import PaymentLinkButton from './PaymentLinkButton';
 import Button from './ui/Button';
-import { Card, SectionHeader, EmptyState } from './ui/Card';
+import { Card, EmptyState, PageHeader, SectionHeader } from './ui/Card';
+import { ProgressRing, Stat, StatGrid } from './ui/Stat';
+import Modal from './ui/Modal';
+import { Field, FormGrid, Input, Select, Textarea } from './ui/Field';
+import { todayStr as today, toLocalDateStr, addDaysStr, parseDateStr } from '../utils/dates';
+
+
+const MONTHLY_GOAL = 5000000;
 
 export default function Finanzas() {
   const { transactions, loading, insertTransaction } = useTransactions();
-  const { appointments } = useAppointments();
   const { patients } = usePatients();
   const toast = useToast();
   const [showNewForm, setShowNewForm] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  // Todos los hooks arriba de cualquier return condicional (Rules of Hooks)
-  if (loading && transactions.length === 0) return <LoadingState message="Cargando finanzas..." />;
-
-  const incomes = transactions.filter((t) => t.type === 'income');
-  const todayStr = new Date().toISOString().split('T')[0];
-  const now = new Date();
-  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
-  const weekStartStr = weekStart.toISOString().split('T')[0];
+  const todayStr = today();
   const monthStr = todayStr.substring(0, 7);
-  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const lastMonthStr = lastMonthDate.toISOString().substring(0, 7);
+  const monthName = parseDateStr(`${monthStr}-01`).toLocaleDateString('es-CO', { month: 'long' });
 
-  const todayIncome = incomes.filter((t) => t.date === todayStr).reduce((s, t) => s + t.amount, 0);
-  const weekIncome = incomes.filter((t) => t.date >= weekStartStr).reduce((s, t) => s + t.amount, 0);
-  const monthIncome = incomes.filter((t) => t.date?.startsWith(monthStr)).reduce((s, t) => s + t.amount, 0);
-  const lastMonthIncome = incomes.filter((t) => t.date?.startsWith(lastMonthStr)).reduce((s, t) => s + t.amount, 0);
+  const m = useMemo(() => {
+    const now = new Date();
+    const incomes = transactions.filter((t) => t.type === 'income');
+    const weekStart = new Date(now); weekStart.setHours(12, 0, 0, 0);
+    weekStart.setDate(now.getDate() - now.getDay());
+    const weekStartStr = toLocalDateStr(weekStart);
+    const lastMonthStr = toLocalDateStr(new Date(now.getFullYear(), now.getMonth() - 1, 1, 12)).substring(0, 7);
 
-  const incomeBySource = { consultorio: 0, jornadas: 0 };
-  incomes.filter((t) => t.date?.startsWith(monthStr)).forEach((t) => {
-    if (t.category === 'jornada') incomeBySource.jornadas += t.amount;
-    else incomeBySource.consultorio += t.amount;
-  });
+    const sum = (rows) => rows.reduce((s, t) => s + t.amount, 0);
+    const monthIncome = sum(incomes.filter((t) => t.date?.startsWith(monthStr)));
+    const lastMonthIncome = sum(incomes.filter((t) => t.date?.startsWith(lastMonthStr)));
 
-  const incomeByCity = {};
-  incomes.filter((t) => t.date?.startsWith(monthStr)).forEach((t) => {
-    const p = patients.find((pt) => pt.id === t.patient_id);
-    const city = p?.city || 'Otro';
-    incomeByCity[city] = (incomeByCity[city] || 0) + t.amount;
-  });
+    // Comparativa de 6 meses
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1, 12);
+      const key = toLocalDateStr(d).substring(0, 7);
+      months.push({
+        key,
+        label: d.toLocaleDateString('es-CO', { month: 'short' }).replace('.', ''),
+        income: sum(incomes.filter((t) => t.date?.startsWith(key))),
+      });
+    }
 
-  const monthlyGoal = 5000000;
-  const monthlyProjection = monthIncome;
-  const averagePerPatient = patients.length > 0 ? Math.round(monthIncome / patients.length) : 0;
-  const debtors = [];
+    // Serie diaria de 30 días para el sparkline
+    const daily = Array.from({ length: 30 }, (_, i) => {
+      const d = addDaysStr(i - 29);
+      return sum(incomes.filter((t) => t.date === d));
+    });
 
-  const goalPercent = Math.round((monthIncome / monthlyGoal) * 100);
-  const monthChange = lastMonthIncome > 0 ? ((monthIncome - lastMonthIncome) / lastMonthIncome * 100).toFixed(1) : 0;
-  const isUp = monthChange > 0;
+    const bySource = { consultorio: 0, jornadas: 0 };
+    const byCity = {};
+    for (const t of incomes.filter((x) => x.date?.startsWith(monthStr))) {
+      if (t.category === 'jornada') bySource.jornadas += t.amount;
+      else bySource.consultorio += t.amount;
+      const city = patients.find((p) => p.id === t.patient_id)?.city || 'Sin ciudad';
+      byCity[city] = (byCity[city] || 0) + t.amount;
+    }
 
-  // Build monthly comparison from transactions (last 6 months)
-  const monthlyComparison = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = d.toISOString().substring(0, 7);
-    const label = d.toLocaleDateString('es-CO', { month: 'short' });
-    const income = incomes.filter((t) => t.date?.startsWith(key)).reduce((s, t) => s + t.amount, 0);
-    monthlyComparison.push({ month: label, income });
-  }
-  const maxIncome = Math.max(...monthlyComparison.map((m) => m.income), 1);
+    return {
+      incomes,
+      todayIncome: sum(incomes.filter((t) => t.date === todayStr)),
+      weekIncome: sum(incomes.filter((t) => t.date >= weekStartStr)),
+      monthIncome,
+      lastMonthIncome,
+      delta: lastMonthIncome > 0 ? Math.round(((monthIncome - lastMonthIncome) / lastMonthIncome) * 100) : undefined,
+      months,
+      daily,
+      bySource,
+      byCity,
+      avgPerPatient: patients.length > 0 ? Math.round(monthIncome / patients.length) : 0,
+    };
+  }, [transactions, patients, monthStr, todayStr]);
+
+  // `balance_due` solo se llena cuando la agenda decía literalmente "Debe"/
+  // "Saldo" — las demás cifras del histórico son tarifas o abonos ya pagados.
+  const debtors = useMemo(() => patients
+    .filter((p) => Number(p.balance_due || 0) > 0)
+    .map((p) => ({ id: p.id, name: p.full_name, amount: Number(p.balance_due), phone: p.phone, email: p.email, lastVisit: p.last_visit }))
+    .sort((a, b) => b.amount - a.amount), [patients]);
+  const totalDebt = debtors.reduce((s, d) => s + d.amount, 0);
+
+  if (loading && transactions.length === 0) return <LoadingState message="Cargando finanzas…" />;
+
+  const goalPercent = Math.round((m.monthIncome / MONTHLY_GOAL) * 100);
+  const maxMonth = Math.max(...m.months.map((x) => x.income), 1);
+  const maxCity = Math.max(...Object.values(m.byCity), 1);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    setSaving(true);
+    const r = await insertTransaction({
+      type: 'income',
+      amount: parseInt(f.amount.value, 10),
+      category: f.category.value,
+      description: f.description.value || null,
+      patient_id: f.patient_id.value || null,
+      date: f.date.value,
+    });
+    setSaving(false);
+    if (r.error) { toast.error(userFriendlyError(r.error)); return; }
+    toast.success('Ingreso registrado');
+    setShowNewForm(false);
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-tertiary-fixed-dim">Reporte financiero</p>
-          <h1 className="font-display text-3xl font-semibold text-on-surface mt-1">Finanzas</h1>
-          <p className="text-on-surface-variant text-sm mt-1">Ingresos, fuentes y proyección del mes</p>
-        </div>
-        <div className="flex items-center gap-2">
+    <div className="space-y-5 sm:space-y-6">
+      <div>
+        <PageHeader kicker="Reporte financiero" title="Finanzas" subtitle="Ingresos, fuentes y cobros pendientes">
           <Button
-            variant="outline" size="sm" icon={Download} className="hidden sm:inline-flex"
+            variant="outline" size="sm" icon={Download}
             onClick={() => downloadCsv(
-              `transacciones-${new Date().toISOString().slice(0, 10)}.csv`,
+              'transacciones.csv',
               transactions,
               [
                 { key: 'date', label: 'Fecha' }, { key: 'type', label: 'Tipo' }, { key: 'category', label: 'Categoría' },
@@ -89,209 +134,216 @@ export default function Finanzas() {
             Exportar
           </Button>
           <Button size="sm" icon={Plus} onClick={() => setShowNewForm(true)}>Registrar ingreso</Button>
-        </div>
+        </PageHeader>
       </div>
 
-      {/* Métricas conectadas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden shadow-clinical">
-        {[
-          { k: 'Ingresos hoy', v: formatCOP(todayIncome) },
-          { k: 'Esta semana', v: formatCOP(weekIncome) },
-          { k: 'Este mes', v: formatCOP(monthIncome), delta: monthChange },
-          { k: 'Promedio/paciente', v: formatCOP(averagePerPatient), accent: true },
-        ].map((s, i) => (
-          <div key={s.k} className={`p-4 sm:p-5 ${i < 3 ? 'lg:border-r' : ''} ${i % 2 === 0 ? 'border-r' : ''} ${i < 2 ? 'border-b lg:border-b-0' : ''} border-outline-variant`}>
-            <div className="flex items-center justify-between">
-              <p className="text-[11px] font-semibold text-on-surface-variant">{s.k}</p>
-              {s.delta !== undefined && (
-                <span className={`text-[11px] font-semibold flex items-center gap-0.5 ${isUp ? 'text-success' : 'text-danger'}`}>
-                  {isUp ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}{Math.abs(s.delta)}%
-                </span>
-              )}
+      <div>
+        <StatGrid>
+          <Stat label="Ingresos hoy" icon={Wallet} value={formatCOP(m.todayIncome)} sub={formatDate(todayStr)} />
+          <Stat label="Esta semana" icon={CalendarRange} value={formatCOP(m.weekIncome)} series={m.daily.slice(-7)} />
+          <Stat label="Este mes" icon={TrendingUp} value={formatCOP(m.monthIncome)} delta={m.delta} series={m.daily} />
+          <Stat label="Promedio/paciente" icon={Target} tone="accent" value={formatCOP(m.avgPerPatient)} sub={`${patients.length} pacientes`} />
+        </StatGrid>
+      </div>
+
+      <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+        {/* Meta */}
+        <div>
+          <Card className="h-full">
+            <SectionHeader icon={Target} title="Meta del mes" hint={formatCOP(MONTHLY_GOAL)} />
+            <div className="flex items-center gap-5">
+              <ProgressRing percent={goalPercent} size={124} sublabel="de la meta" />
+              <div className="min-w-0">
+                <p className="font-display text-2xl font-semibold text-on-surface tnum leading-none">{formatCOP(m.monthIncome)}</p>
+                <p className="text-xs text-on-surface-variant mt-1.5 first-letter:uppercase">facturado en {monthName}</p>
+                <p className="text-[11px] text-on-surface-variant mt-3 leading-snug">
+                  Faltan <span className="font-semibold text-on-surface tnum">{formatCOP(Math.max(0, MONTHLY_GOAL - m.monthIncome))}</span>
+                  {totalDebt > 0 && (
+                    <> · hay <span className="font-semibold text-danger tnum">{formatCOP(totalDebt)}</span> por cobrar</>
+                  )}
+                </p>
+              </div>
             </div>
-            <p className={`font-display text-2xl sm:text-[26px] font-semibold mt-2 leading-none tnum ${s.accent ? 'text-primary' : 'text-on-surface'}`}>{s.v}</p>
-          </div>
-        ))}
+          </Card>
+        </div>
+
+        {/* Comparativa 6 meses */}
+        <div>
+          <Card className="h-full">
+            <SectionHeader icon={TrendingUp} title="Últimos 6 meses" hint={`Máximo ${formatCOP(maxMonth)}`} />
+            <div className="flex items-end gap-2 sm:gap-3 h-44">
+              {m.months.map((x, i) => {
+                const current = i === m.months.length - 1;
+                const h = Math.max((x.income / maxMonth) * 100, 2);
+                return (
+                  <div key={x.key} className="flex-1 flex flex-col items-center justify-end h-full min-w-0 group">
+                    <span className="text-[9.5px] sm:text-[10.5px] font-display font-semibold text-on-surface mb-1.5 tnum opacity-0 group-hover:opacity-100 transition-opacity sm:opacity-100 truncate w-full text-center">
+                      {x.income > 0 ? formatCOP(x.income).replace(/\s/g, '') : '—'}
+                    </span>
+                    <div
+                      style={{ height: `${h}%`, transition: 'height 0.7s cubic-bezier(0.22,1,0.36,1)' }}
+                      className={`w-full rounded-t-lg ${current ? 'amber-gradient' : 'clinical-gradient opacity-80 group-hover:opacity-100'}`}
+                    />
+                    <span className="text-[10px] sm:text-[11px] text-on-surface-variant mt-2 capitalize truncate w-full text-center">{x.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
       </div>
 
-      {/* Meta mensual */}
-      <Card>
-        <div className="flex items-center justify-between mb-3">
-          <SectionHeader title="Meta mensual" className="mb-0" />
-          <span className="text-sm font-semibold text-on-surface-variant tnum">{goalPercent}%</span>
-        </div>
-        <div className="w-full bg-surface-container-high rounded-full h-3 overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${goalPercent >= 100 ? 'bg-success' : goalPercent >= 60 ? 'clinical-gradient' : 'amber-gradient'}`}
-            style={{ width: `${Math.min(goalPercent, 100)}%` }}
-          />
-        </div>
-        <div className="flex justify-between text-xs text-on-surface-variant mt-2">
-          <span className="tnum">{formatCOP(monthIncome)}</span>
-          <span>Meta · <span className="tnum">{formatCOP(monthlyGoal)}</span></span>
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Ingresos por fuente */}
-        <Card>
-          <SectionHeader title="Ingresos por fuente" />
-          <div className="space-y-4">
-            {[
-              { icon: Building2, label: 'Consultorio', val: incomeBySource.consultorio, cls: 'bg-primary' },
-              { icon: MapPin, label: 'Jornadas', val: incomeBySource.jornadas, cls: 'amber-gradient' },
-            ].map((s) => (
-              <div key={s.label} className="flex items-center gap-4">
-                <div className="bg-primary/10 p-3 rounded-xl"><s.icon size={20} className="text-primary" /></div>
-                <div className="flex-1">
-                  <div className="flex justify-between mb-1.5">
-                    <span className="text-sm font-medium text-on-surface">{s.label}</span>
-                    <span className="text-sm font-display font-semibold text-on-surface tnum">{formatCOP(s.val)}</span>
-                  </div>
-                  <div className="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
-                    <div className={`${s.cls} h-full rounded-full`} style={{ width: `${monthIncome > 0 ? (s.val / monthIncome) * 100 : 0}%` }} />
+      <div className="grid gap-5 sm:gap-6 lg:grid-cols-2">
+        {/* Fuente */}
+        <div>
+          <Card className="h-full">
+            <SectionHeader icon={Building2} title="Ingresos por fuente" hint="Mes en curso" />
+            <div className="space-y-4">
+              {[
+                { icon: Building2, label: 'Consultorio', val: m.bySource.consultorio, cls: 'clinical-gradient' },
+                { icon: MapPin, label: 'Jornadas', val: m.bySource.jornadas, cls: 'amber-gradient' },
+              ].map((s) => (
+                <div key={s.label} className="flex items-center gap-3.5">
+                  <span className="bg-primary/8 p-2.5 rounded-xl flex-shrink-0"><s.icon size={18} className="text-primary" /></span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between gap-2 mb-1.5">
+                      <span className="text-[13px] font-medium text-on-surface">{s.label}</span>
+                      <span className="text-[13px] font-display font-semibold text-on-surface tnum">{formatCOP(s.val)}</span>
+                    </div>
+                    <div className="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
+                      <div
+                        style={{ width: `${m.monthIncome > 0 ? (s.val / m.monthIncome) * 100 : 0}%`, transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)' }}
+                        className={`${s.cls} h-full rounded-full`}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+              ))}
+            </div>
+          </Card>
+        </div>
 
-        {/* Ingresos por ciudad */}
-        <Card>
-          <SectionHeader title="Ingresos por ciudad" />
-          <div className="space-y-3">
-            {Object.entries(incomeByCity).filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a).map(([city, income]) => (
-              <div key={city} className="flex items-center gap-3">
-                <span className="text-sm text-on-surface w-24 truncate">{city}</span>
-                <div className="flex-1 bg-surface-container-high rounded-full h-2 overflow-hidden">
-                  <div className="clinical-gradient h-full rounded-full" style={{ width: `${maxIncome > 0 ? (income / maxIncome) * 100 : 0}%` }} />
+        {/* Ciudad */}
+        <div>
+          <Card className="h-full">
+            <SectionHeader icon={MapPin} title="Ingresos por ciudad" hint="Mes en curso" />
+            <div className="space-y-2.5">
+              {Object.entries(m.byCity).filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a).slice(0, 6).map(([city, income]) => (
+                <div key={city} className="flex items-center gap-3">
+                  <span className="text-[12.5px] text-on-surface w-20 sm:w-24 truncate flex-shrink-0">{city}</span>
+                  <div className="flex-1 bg-surface-container-high rounded-full h-2 overflow-hidden min-w-0">
+                    <div
+                      style={{ width: `${(income / maxCity) * 100}%`, transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)' }}
+                      className="clinical-gradient h-full rounded-full"
+                    />
+                  </div>
+                  <span className="text-[12.5px] font-display font-semibold text-on-surface min-w-[84px] text-right tnum flex-shrink-0">
+                    {formatCOP(income)}
+                  </span>
                 </div>
-                <span className="text-sm font-display font-semibold text-on-surface min-w-[90px] text-right tnum">{formatCOP(income)}</span>
-              </div>
-            ))}
-            {Object.values(incomeByCity).every((v) => !v) && <EmptyState title="Sin ingresos este mes" />}
-          </div>
-        </Card>
+              ))}
+              {Object.values(m.byCity).every((v) => !v) && <EmptyState title="Sin ingresos este mes" hint="Los cobros aparecerán aquí en cuanto se registren." />}
+            </div>
+          </Card>
+        </div>
       </div>
-
-      {/* Comparativa mensual */}
-      <Card>
-        <SectionHeader title="Comparativa · últimos 6 meses" />
-        <div className="flex items-end gap-3 sm:gap-4 h-52 pt-6">
-          {monthlyComparison.map((m, i) => {
-            const isCurrent = i === monthlyComparison.length - 1;
-            return (
-              <div key={m.month} className="flex-1 flex flex-col items-center h-full justify-end">
-                <span className="text-[10px] sm:text-xs font-display font-semibold text-on-surface mb-1.5 tnum">{formatCOP(m.income)}</span>
-                <div
-                  className={`w-full rounded-t-lg transition-all ${isCurrent ? 'amber-gradient' : 'clinical-gradient opacity-85 hover:opacity-100'}`}
-                  style={{ height: `${Math.max((m.income / maxIncome) * 100, 2)}%` }}
-                />
-                <span className="text-xs text-on-surface-variant mt-2 capitalize">{m.month}</span>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
 
       {/* Pagos pendientes */}
-      <Card>
-        <div className="flex items-center gap-2 mb-4">
-          <AlertTriangle size={18} className="text-danger" />
-          <h3 className="font-display text-lg font-semibold text-on-surface">Pagos pendientes</h3>
-        </div>
-        {debtors.length === 0 ? (
-          <EmptyState title="Sin pagos pendientes" hint="Todo al día." />
-        ) : (
-          <div className="space-y-2">
-            {debtors.map((d) => (
-              <div key={d.patient_id || d.patientId} className="flex items-center justify-between p-3 bg-surface-container-low rounded-xl">
-                <div>
-                  <p className="text-sm font-medium text-on-surface">{d.patient_name || d.patientName}</p>
-                  <p className="text-xs text-on-surface-variant">Vencimiento: {d.due_date || d.dueDate}</p>
+      <div>
+        <Card>
+          <SectionHeader
+            icon={AlertTriangle}
+            title="Pagos pendientes"
+            hint={debtors.length > 0 ? `${debtors.length} pacientes · ${formatCOP(totalDebt)}` : undefined}
+          />
+          {debtors.length === 0 ? (
+            <EmptyState icon={Wallet} title="Sin pagos pendientes" hint="Todo al día." />
+          ) : (
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 max-h-[440px] overflow-y-auto pr-1">
+              {debtors.map((d) => (
+                <div key={d.id} className="flex items-center justify-between gap-3 p-3 bg-surface-container-low border border-outline-variant/60 rounded-xl">
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold text-on-surface truncate">{d.name}</p>
+                    <p className="text-[11px] text-on-surface-variant truncate">
+                      {d.lastVisit ? `Últ. visita ${formatDate(d.lastVisit)}` : 'Sin visitas registradas'}
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-[13px] font-display font-semibold text-danger tnum">{formatCOP(d.amount)}</p>
+                    <PaymentLinkButton
+                      amount={d.amount}
+                      description={`Saldo pendiente — ${d.name}`}
+                      patientId={d.id}
+                      customerName={d.name}
+                      customerPhone={d.phone}
+                      customerEmail={d.email}
+                      label="Cobrar"
+                      className="!px-2.5 !py-1 !text-[11px] !font-semibold !rounded-lg mt-1"
+                    />
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-display font-semibold text-danger tnum">{formatCOP(d.amount)}</p>
-                  <button className="text-xs text-primary hover:underline font-medium">Recordar</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      {/* Proyección */}
-      <div className="clinical-gradient rounded-2xl p-6 text-on-primary relative overflow-hidden shadow-pine">
-        <TrendingUp size={90} className="absolute -right-4 -bottom-4 opacity-10" />
-        <div className="flex items-center gap-2 mb-1">
-          <TrendingUp size={18} />
-          <h3 className="font-semibold text-[10px] uppercase tracking-[0.2em] text-tertiary-fixed">Proyección del mes</h3>
-        </div>
-        <p className="font-display text-4xl font-semibold tnum">{formatCOP(monthlyProjection)}</p>
-        <p className="text-sm text-on-primary/75 mt-1">Basado en la tendencia actual de ingresos</p>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
 
-      {/* New Transaction Form */}
-      {showNewForm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNewForm(false)}>
-          <div className="bg-surface-container-lowest rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-on-surface">Registrar Ingreso</h3>
-              <button onClick={() => setShowNewForm(false)} className="text-on-surface-variant/50 hover:text-on-surface-variant"><X size={20} /></button>
-            </div>
-            <form className="space-y-4" onSubmit={async (e) => {
-              e.preventDefault();
-              const form = e.target;
-              const r = await insertTransaction({
-                type: 'income',
-                amount: parseInt(form.amount.value, 10),
-                category: form.category.value,
-                description: form.description.value || null,
-                patient_id: form.patient_id.value || null,
-                date: form.date.value,
-              });
-              if (r.error) { toast.error(userFriendlyError(r.error)); return; }
-              toast.success('Transacción registrada');
-              setShowNewForm(false);
-            }}>
-              <div>
-                <label className="text-xs text-on-surface-variant block mb-1">Monto (COP)</label>
-                <input name="amount" type="number" required min="0" step="1000" className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="150000" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-on-surface-variant block mb-1">Categoría</label>
-                  <select name="category" className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                    <option value="consulta">Consulta</option>
-                    <option value="seguimiento">Seguimiento</option>
-                    <option value="jornada">Jornada</option>
-                    <option value="otro">Otro</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs text-on-surface-variant block mb-1">Fecha</label>
-                  <input name="date" type="date" required defaultValue={todayStr} className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                </div>
-              </div>
-              <div>
-                <label className="text-xs text-on-surface-variant block mb-1">Paciente (opcional)</label>
-                <select name="patient_id" className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                  <option value="">Sin paciente asociado</option>
-                  {patients.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs text-on-surface-variant block mb-1">Descripción</label>
-                <input name="description" className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Descripción del ingreso..." />
-              </div>
-              <button type="submit" className="w-full bg-primary hover:bg-primary-dark text-white py-2.5 rounded-lg text-sm font-medium transition-colors">
-                Registrar Ingreso
-              </button>
-            </form>
+      {/* Proyección */}
+      <div>
+        <Card tone="pine" className="relative overflow-hidden">
+          <TrendingUp size={130} className="absolute -right-5 -bottom-8 opacity-[0.12]" aria-hidden="true" />
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-tertiary-fixed">Facturado este mes</p>
+          <p className="font-display text-hero font-semibold tnum mt-1.5">{formatCOP(m.monthIncome)}</p>
+          <p className="text-sm text-on-primary/75 mt-2 max-w-lg">
+            {typeof m.delta === 'number'
+              ? `${m.delta >= 0 ? 'Vas' : 'Estás'} ${Math.abs(m.delta)}% ${m.delta >= 0 ? 'por encima' : 'por debajo'} del mes anterior (${formatCOP(m.lastMonthIncome)}).`
+              : 'Aún no hay mes anterior para comparar.'}
+          </p>
+        </Card>
+      </div>
+
+      {/* Registrar ingreso */}
+      <Modal
+        open={showNewForm}
+        onClose={() => setShowNewForm(false)}
+        title="Registrar ingreso"
+        subtitle="Para cobros en efectivo o por fuera de la pasarela"
+        footer={
+          <div className="flex gap-2.5">
+            <Button variant="outline" className="flex-1" type="button" onClick={() => setShowNewForm(false)}>Cancelar</Button>
+            <Button className="flex-[2]" type="submit" form="new-income" loading={saving}>Registrar</Button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="new-income" onSubmit={submit} className="space-y-4 pb-2">
+          <Field label="Monto (COP)" required>
+            <Input name="amount" type="number" required min="0" step="1000" inputMode="numeric" placeholder="150000" />
+          </Field>
+          <FormGrid>
+            <Field label="Categoría">
+              <Select name="category" defaultValue="consulta">
+                <option value="consulta">Consulta</option>
+                <option value="seguimiento">Seguimiento</option>
+                <option value="jornada">Jornada</option>
+                <option value="producto">Producto</option>
+                <option value="otro">Otro</option>
+              </Select>
+            </Field>
+            <Field label="Fecha" required>
+              <Input name="date" type="date" required defaultValue={todayStr} />
+            </Field>
+          </FormGrid>
+          <Field label="Paciente" hint="Opcional — permite atribuir el ingreso por ciudad">
+            <Select name="patient_id" defaultValue="">
+              <option value="">Sin paciente asociado</option>
+              {patients.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
+            </Select>
+          </Field>
+          <Field label="Descripción">
+            <Textarea name="description" rows={2} placeholder="Detalle del ingreso…" />
+          </Field>
+        </form>
+      </Modal>
     </div>
   );
 }

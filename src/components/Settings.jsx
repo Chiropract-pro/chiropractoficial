@@ -1,16 +1,32 @@
 import { useState } from 'react';
-import { Settings as SettingsIcon, Building2, User, CreditCard, Shield, Save, CheckCircle, MessageCircle, Clock, Users, FileText, Globe } from 'lucide-react';
+import { Building2, CheckCircle, CreditCard, FileText, Globe, Save, User, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { wa } from '../lib/clinic';
 import TeamTab from './TeamTab';
 import BillingSettings from './billing/BillingSettings';
 import PlanTab from './billing/PlanTab';
 import PublicProfileTab from './directory/PublicProfileTab';
+import { userFriendlyError } from '../lib/logger';
+import { Card, PageHeader, SectionHeader } from './ui/Card';
+import { UnderlineTabs } from './ui/Tabs';
+import { Field, FormGrid, Input } from './ui/Field';
+import Button from './ui/Button';
+
+
+const TABS = [
+  { id: 'clinic', label: 'Consultorio', icon: Building2 },
+  { id: 'directory', label: 'Perfil público', icon: Globe },
+  { id: 'team', label: 'Equipo', icon: Users },
+  { id: 'billing', label: 'Facturación DIAN', icon: FileText },
+  { id: 'profile', label: 'Mi perfil', icon: User },
+  { id: 'plan', label: 'Plan', icon: CreditCard },
+];
 
 export default function Settings() {
   const { tenant, profile, updateProfile, updateTenant } = useAuth();
   const [activeTab, setActiveTab] = useState('clinic');
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [clinicForm, setClinicForm] = useState({
     name: tenant?.name || '',
     slug: tenant?.slug || '',
@@ -23,196 +39,133 @@ export default function Settings() {
     phone: profile?.phone || '',
   });
 
-  const handleSaveClinic = async (e) => {
+  // updateTenant/updateProfile hacen throw. Sin try/catch, un fallo (p.ej. RLS:
+  // solo el owner puede editar el consultorio) dejaba la promesa rechazada y la
+  // pantalla SIN NINGUNA señal: ni éxito ni error. Ahora siempre hay respuesta.
+  const save = async (fn, fallbackMsg) => {
+    setSaveError('');
+    setSaving(true);
+    try {
+      await fn();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2400);
+    } catch (err) {
+      setSaveError(userFriendlyError(err) || fallbackMsg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveClinic = (e) => {
     e.preventDefault();
-    if (updateTenant) {
-      await updateTenant({
+    save(
+      () => updateTenant?.({
         name: clinicForm.name,
         phone: clinicForm.phone || null,
         address: clinicForm.address || null,
         city: clinicForm.city || null,
-      });
-    }
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+      }),
+      'No se pudieron guardar los cambios.',
+    );
   };
 
-  const handleSaveProfile = async (e) => {
+  const handleSaveProfile = (e) => {
     e.preventDefault();
-    if (updateProfile) {
-      await updateProfile(profileForm);
-    }
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    save(() => updateProfile?.(profileForm), 'No se pudo guardar tu perfil.');
   };
 
-  const tabs = [
-    { id: 'clinic', label: 'Consultorio', icon: Building2 },
-    { id: 'directory', label: 'Perfil público', icon: Globe },
-    { id: 'team', label: 'Equipo', icon: Users },
-    { id: 'billing', label: 'Facturación DIAN', icon: FileText },
-    { id: 'profile', label: 'Mi Perfil', icon: User },
-    { id: 'plan', label: 'Plan', icon: CreditCard },
-  ];
+  const initials = (profileForm.full_name || 'U').split(' ').map((n) => n[0]).join('').slice(0, 2);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-on-surface">Configuración</h2>
-          <p className="text-on-surface-variant text-sm mt-1">Administra tu consultorio y perfil</p>
+    <div className="space-y-5 sm:space-y-6">
+      <div>
+        <PageHeader kicker="Configuración" title="Ajustes" subtitle="Consultorio, equipo, facturación y plan">
+          {saved && (
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-success bg-[#e0efe8] px-3 py-1.5 rounded-full">
+              <CheckCircle size={14} /> Guardado
+            </span>
+          )}
+        </PageHeader>
+      </div>
+
+      {saveError && (
+        <div className="bg-error-container/40 text-on-error-container border border-error/25 px-4 py-3 rounded-xl text-sm">
+          {saveError}
         </div>
-        {saved && (
-          <span className="flex items-center gap-1 text-sm text-success font-medium">
-            <CheckCircle size={16} /> Guardado
-          </span>
+      )}
+
+      <div>
+        <UnderlineTabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
+      </div>
+
+      <div>
+        {activeTab === 'clinic' && (
+          <Card className="max-w-3xl">
+            <SectionHeader icon={Building2} title="Información del consultorio" hint="Aparece en recibos, correos y el perfil público" />
+            <form onSubmit={handleSaveClinic} className="space-y-4">
+              <FormGrid>
+                <Field label="Nombre del consultorio" required>
+                  <Input value={clinicForm.name} onChange={(e) => setClinicForm({ ...clinicForm, name: e.target.value })} />
+                </Field>
+                <Field label="Slug (URL)" hint="No se puede cambiar: es la dirección de tu perfil">
+                  <Input value={clinicForm.slug} disabled />
+                </Field>
+                <Field label="Teléfono">
+                  <Input
+                    value={clinicForm.phone}
+                    onChange={(e) => setClinicForm({ ...clinicForm, phone: e.target.value })}
+                    placeholder="310 123 4567"
+                    type="tel"
+                  />
+                </Field>
+                <Field label="Ciudad">
+                  <Input value={clinicForm.city} onChange={(e) => setClinicForm({ ...clinicForm, city: e.target.value })} placeholder="Bogotá" />
+                </Field>
+                <Field label="Dirección" span={2}>
+                  <Input value={clinicForm.address} onChange={(e) => setClinicForm({ ...clinicForm, address: e.target.value })} placeholder="Dirección completa" />
+                </Field>
+              </FormGrid>
+              <Button type="submit" icon={Save} loading={saving}>Guardar cambios</Button>
+            </form>
+          </Card>
+        )}
+
+        {activeTab === 'directory' && <PublicProfileTab />}
+        {activeTab === 'team' && <TeamTab />}
+        {activeTab === 'billing' && <BillingSettings />}
+        {activeTab === 'plan' && <PlanTab />}
+
+        {activeTab === 'profile' && (
+          <Card className="max-w-3xl">
+            <SectionHeader icon={User} title="Mi perfil" hint="Tu información personal dentro del consultorio" />
+            <div className="flex items-center gap-4 mb-5 pb-5 hairline border-t-0 border-b border-outline-variant">
+              <span className="w-14 h-14 rounded-2xl clinical-gradient flex items-center justify-center text-lg font-bold text-on-primary flex-shrink-0">
+                {initials}
+              </span>
+              <div className="min-w-0">
+                <p className="font-display text-base font-semibold text-on-surface truncate">{profileForm.full_name || 'Usuario'}</p>
+                <p className="text-sm text-on-surface-variant truncate">{profile?.email || ''}</p>
+              </div>
+            </div>
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <FormGrid>
+                <Field label="Nombre completo" required>
+                  <Input value={profileForm.full_name} onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })} />
+                </Field>
+                <Field label="Teléfono">
+                  <Input
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                    placeholder="310 123 4567"
+                    type="tel"
+                  />
+                </Field>
+              </FormGrid>
+              <Button type="submit" icon={Save} loading={saving}>Guardar cambios</Button>
+            </form>
+          </Card>
         )}
       </div>
-
-      {/* Tabs */}
-      <div className="flex gap-2 border-b border-outline-variant pb-0">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                activeTab === tab.id
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <Icon size={16} /> {tab.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Clinic Tab */}
-      {activeTab === 'clinic' && (
-        <div className="bg-surface-container-lowest rounded-xl shadow-clinical border border-outline-variant p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-primary/10 p-3 rounded-lg">
-              <Building2 size={24} className="text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-on-surface">Información del Consultorio</h3>
-              <p className="text-xs text-on-surface-variant">Datos generales de tu práctica</p>
-            </div>
-          </div>
-          <form onSubmit={handleSaveClinic} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-on-surface-variant block mb-1">Nombre del consultorio</label>
-                <input
-                  value={clinicForm.name}
-                  onChange={(e) => setClinicForm({ ...clinicForm, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-on-surface-variant block mb-1">Slug (URL)</label>
-                <input
-                  value={clinicForm.slug}
-                  disabled
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm bg-surface-container-low text-on-surface-variant"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-on-surface-variant block mb-1">Teléfono</label>
-                <input
-                  value={clinicForm.phone}
-                  onChange={(e) => setClinicForm({ ...clinicForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="310-123-4567"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-on-surface-variant block mb-1">Ciudad</label>
-                <input
-                  value={clinicForm.city}
-                  onChange={(e) => setClinicForm({ ...clinicForm, city: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="Bogotá"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="text-xs text-on-surface-variant block mb-1">Dirección</label>
-                <input
-                  value={clinicForm.address}
-                  onChange={(e) => setClinicForm({ ...clinicForm, address: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="Dirección completa"
-                />
-              </div>
-            </div>
-            <button type="submit" className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-              <Save size={16} /> Guardar Cambios
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Public Directory Profile Tab */}
-      {activeTab === 'directory' && <PublicProfileTab />}
-
-      {/* Team Tab */}
-      {activeTab === 'team' && <TeamTab />}
-
-      {/* Billing DIAN Tab */}
-      {activeTab === 'billing' && <BillingSettings />}
-
-      {/* Profile Tab */}
-      {activeTab === 'profile' && (
-        <div className="bg-surface-container-lowest rounded-xl shadow-clinical border border-outline-variant p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-primary/10 p-3 rounded-lg">
-              <User size={24} className="text-primary" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-on-surface">Mi Perfil</h3>
-              <p className="text-xs text-on-surface-variant">Tu información personal</p>
-            </div>
-          </div>
-          <form onSubmit={handleSaveProfile} className="space-y-4">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 rounded-full clinical-gradient flex items-center justify-center text-xl font-bold text-white">
-                {(profileForm.full_name || 'U').split(' ').map((n) => n[0]).join('').slice(0, 2)}
-              </div>
-              <div>
-                <p className="font-semibold text-on-surface">{profileForm.full_name || 'Usuario'}</p>
-                <p className="text-sm text-on-surface-variant">{profile?.email || ''}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-on-surface-variant block mb-1">Nombre completo</label>
-                <input
-                  value={profileForm.full_name}
-                  onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-              <div>
-                <label className="text-xs text-on-surface-variant block mb-1">Teléfono</label>
-                <input
-                  value={profileForm.phone}
-                  onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                  className="w-full px-3 py-2 rounded-lg border border-outline-variant text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="310-123-4567"
-                />
-              </div>
-            </div>
-            <button type="submit" className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors">
-              <Save size={16} /> Guardar Cambios
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Plan Tab — gestión completa de suscripción SaaS */}
-      {activeTab === 'plan' && <PlanTab />}
     </div>
   );
 }

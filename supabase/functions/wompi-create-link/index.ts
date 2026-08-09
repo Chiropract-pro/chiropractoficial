@@ -26,6 +26,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.0';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const WOMPI_PRIVATE = Deno.env.get('WOMPI_PRIVATE_KEY')!;
 const WOMPI_INTEGRITY = Deno.env.get('WOMPI_INTEGRITY_SECRET')!;
 const WOMPI_BASE = Deno.env.get('WOMPI_BASE_URL') || 'https://production.wompi.co/v1';
@@ -44,6 +45,13 @@ async function sha256Hex(input: string): Promise<string> {
     .join('');
 }
 
+// Token aleatorio (CSPRNG) para acceso al recibo desde el redirect de Wompi.
+function randomToken(bytes = 32): string {
+  const arr = new Uint8Array(bytes);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
@@ -59,6 +67,48 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
+
+    // ── AUTORIZACIÓN ─────────────────────────────────────────────────────────
+    // Antes de crear un payment link REAL contra la cuenta Wompi del consultorio
+    // exigimos: (a) service_role (n8n), o (b) un usuario del CRM autenticado que
+    // sea miembro aceptado del tenant. Sin esto, cualquiera podía generar links.
+    const authHeader = req.headers.get('Authorization') || '';
+    const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+
+    if (!bearer) {
+      return new Response(JSON.stringify({ error: 'No autenticado' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (bearer !== SERVICE_ROLE) {
+      // Ruta CRM: validar el JWT del usuario y su membresía en el tenant.
+      const userClient = createClient(SUPABASE_URL, ANON_KEY, {
+        global: { headers: { Authorization: `Bearer ${bearer}` } },
+      });
+      const { data: userData, error: uErr } = await userClient.auth.getUser();
+      const user = userData?.user;
+      if (uErr || !user) {
+        return new Response(JSON.stringify({ error: 'Sesión inválida' }), {
+          status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: membership } = await supabase
+        .from('tenant_memberships')
+        .select('tenant_id')
+        .eq('user_id', user.id)
+        .eq('tenant_id', tenant_id)
+        .not('accepted_at', 'is', null)
+        .maybeSingle();
+
+      if (!membership) {
+        return new Response(JSON.stringify({ error: 'No tienes acceso a este consultorio' }), {
+          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     // 1. Crear payment intent en BD (genera reference única)
     const { data: payment, error: pErr } = await supabase.rpc('create_payment_intent', {
@@ -82,6 +132,10 @@ Deno.serve(async (req) => {
     const reference = payment.reference;
     const amountInCents = amount * 100; // Wompi recibe centavos para COP
 
+    // Token de acceso al recibo: viaja en el redirect de Wompi (navegador sin
+    // header Authorization) y lo valida la función `receipt` contra este valor.
+    const receiptToken = randomToken();
+
     // 2. Calcular integrity hash: sha256(reference + amountInCents + currency + integrity_secret)
     const integrity = await sha256Hex(`${reference}${amountInCents}COP${WOMPI_INTEGRITY}`);
 
@@ -94,7 +148,7 @@ Deno.serve(async (req) => {
       currency: 'COP',
       amount_in_cents: amountInCents,
       expires_at: payment.expires_at,
-      redirect_url: `${SUPABASE_URL.replace('.supabase.co', '.supabase.co')}/functions/v1/receipt?payment_id=${payment.id}`,
+      redirect_url: `${SUPABASE_URL}/functions/v1/receipt?payment_id=${payment.id}&t=${receiptToken}`,
     };
 
     const wompiResp = await fetch(`${WOMPI_BASE}/payment_links`, {
@@ -126,7 +180,7 @@ Deno.serve(async (req) => {
     await supabase.from('payments').update({
       provider_payment_link_id: linkId,
       payment_url: checkoutUrl,
-      metadata: { ...(payment.metadata || {}), integrity_hash: integrity },
+      metadata: { ...(payment.metadata || {}), integrity_hash: integrity, receipt_token: receiptToken },
     }).eq('id', payment.id);
 
     return new Response(JSON.stringify({

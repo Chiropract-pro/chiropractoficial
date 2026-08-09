@@ -14,7 +14,7 @@ export function useBillingConfig() {
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {
-    if (!tenant?.id) return;
+    if (!tenant?.id) { setLoading(false); return; }
     setLoading(true);
     try {
       const { data, error } = await supabase

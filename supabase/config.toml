@@ -14,11 +14,26 @@ verify_jwt = false        # Página de recibo; valida token propio internamente
 [functions.wompi-create-link]
 verify_jwt = false        # Genera link de pago; llamada pública/servidor
 
+[functions.bold-webhook]
+verify_jwt = false        # Lo llama Bold (sin sesión); valida firma HMAC x-bold-signature
+
+[functions.bold-create-link]
+verify_jwt = false        # Genera link de pago Bold; valida JWT+membresía internamente
+
+[functions.notifications-dispatch]
+verify_jwt = false        # Lo llama el cron con service_role; valida el bearer internamente
+
+[functions.whatsapp-status]
+verify_jwt = false        # Valida CRON_SECRET/service_role internamente
+
 [functions.patient-otp-request]
 verify_jwt = false        # Paciente anónimo pide código
 
 [functions.patient-otp-verify]
 verify_jwt = false        # Paciente anónimo valida código
+
+[functions.patient-pay-balance]
+verify_jwt = false        # Usa el session_token del paciente (Bearer), validado internamente
 
 [functions.patient-me]
 verify_jwt = false         # Usa session_token propio del paciente (Bearer)

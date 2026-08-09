@@ -49,9 +49,9 @@ export default function TrialBanner({ onUpgradeClick }) {
   if (!variant) return null;
 
   const colors = {
-    info: 'bg-blue-500',
-    warning: 'bg-amber-500',
-    error: 'bg-red-600',
+    info: 'bg-info',
+    warning: 'bg-warning',
+    error: 'bg-danger',
   }[variant];
 
   const handleDismiss = () => {

@@ -61,25 +61,41 @@ Deno.serve(async (req) => {
       p_user_agent: ua,
     });
 
+    // A partir de la migración 029, la RPC ya NO lanza excepción en los caminos
+    // de fallo (para que el contador de intentos persista): devuelve una fila
+    // con success=false + error_code. Un `error` aquí es un fallo inesperado
+    // de BD (p.ej. teléfono inválido), no un código incorrecto.
     if (error) {
       console.error('patient_otp_verify error', error);
-      const msg = String(error.message || 'Error de verificación');
-      if (msg.includes('Demasiados intentos')) return jsonResponse({ error: msg }, 429);
-      if (msg.includes('No encontramos')) return jsonResponse({ error: msg }, 404);
-      return jsonResponse({ error: msg }, 401);
+      return jsonResponse({ error: 'No se pudo verificar el código. Intenta de nuevo.' }, 400);
     }
 
-    const session = Array.isArray(data) ? data[0] : data;
-    if (!session?.session_token) {
+    const row = Array.isArray(data) ? data[0] : data;
+
+    if (!row?.success) {
+      switch (row?.error_code) {
+        case 'too_many_attempts':
+          return jsonResponse({ error: 'Demasiados intentos. Solicita un nuevo código.' }, 429);
+        case 'no_patient':
+          return jsonResponse({ error: 'No encontramos un paciente registrado con este número. Habla con tu doctor.' }, 404);
+        case 'wrong_code':
+          return jsonResponse({ error: 'Código incorrecto.' }, 401);
+        case 'invalid_or_expired':
+        default:
+          return jsonResponse({ error: 'Código no válido o expirado.' }, 401);
+      }
+    }
+
+    if (!row?.session_token) {
       return jsonResponse({ error: 'No se pudo crear sesión' }, 500);
     }
 
     return jsonResponse({
-      session_token: session.session_token,
-      patient_id: session.patient_id,
-      tenant_id: session.tenant_id,
-      patient_name: session.patient_name,
-      expires_at: session.expires_at,
+      session_token: row.session_token,
+      patient_id: row.patient_id,
+      tenant_id: row.tenant_id,
+      patient_name: row.patient_name,
+      expires_at: row.expires_at,
     });
   } catch (e) {
     console.error('patient-otp-verify fatal', e);

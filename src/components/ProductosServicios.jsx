@@ -1,9 +1,20 @@
 import { useState, useMemo } from 'react';
-import { Package, Stethoscope, ShoppingCart, Plus, Edit2, Trash2, X, AlertTriangle, TrendingUp, Calendar, MapPin } from 'lucide-react';
+import { Package, Stethoscope, ShoppingCart, Plus, Edit2, Trash2, X, AlertTriangle, TrendingUp, Calendar, MapPin, Boxes, Receipt } from 'lucide-react';
 import { useServices, useProducts, useSales } from '../hooks/useTenantData';
 import { formatCOP, formatShortDate } from '../utils/format';
 import { userFriendlyError } from '../lib/logger';
 import EmitInvoiceButton from './billing/EmitInvoiceButton';
+import PaymentLinkButton from './PaymentLinkButton';
+import { useToast } from './Toast';
+import { Card, EmptyState as UIEmptyState, PageHeader, SectionHeader } from './ui/Card';
+import { Stat, StatGrid } from './ui/Stat';
+import { SegmentedTabs } from './ui/Tabs';
+import UIModal from './ui/Modal';
+import { Field } from './ui/Field';
+import Button from './ui/Button';
+import Badge from './ui/Badge';
+import { cn } from '../lib/utils';
+
 
 const SERVICE_CATEGORIES = [
   { value: 'consulta', label: 'Consulta' },
@@ -34,26 +45,26 @@ export default function ProductosServicios() {
   const [activeTab, setActiveTab] = useState('servicios');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-on-surface">Productos y Servicios</h2>
-        <p className="text-on-surface-variant text-sm mt-1">
-          Catálogo de servicios, inventario de productos y ventas por jornada
-        </p>
+        <PageHeader
+          kicker="Catálogo y punto de venta"
+          title="Productos y servicios"
+          subtitle="Lo que se cobra en consultorio y lo que se vende en jornada"
+        />
       </div>
 
-      <div className="border-b border-outline-variant">
-        <nav className="flex gap-1">
-          <TabButton active={activeTab === 'servicios'} onClick={() => setActiveTab('servicios')} icon={Stethoscope}>
-            Servicios
-          </TabButton>
-          <TabButton active={activeTab === 'productos'} onClick={() => setActiveTab('productos')} icon={Package}>
-            Productos
-          </TabButton>
-          <TabButton active={activeTab === 'ventas'} onClick={() => setActiveTab('ventas')} icon={ShoppingCart}>
-            Ventas
-          </TabButton>
-        </nav>
+      <div>
+        <SegmentedTabs
+          layoutId="productos-tab"
+          value={activeTab}
+          onChange={setActiveTab}
+          tabs={[
+            { id: 'servicios', label: 'Servicios', icon: Stethoscope },
+            { id: 'productos', label: 'Productos', icon: Package },
+            { id: 'ventas', label: 'Ventas', icon: ShoppingCart },
+          ]}
+        />
       </div>
 
       {activeTab === 'servicios' && <ServicesTab />}
@@ -63,26 +74,12 @@ export default function ProductosServicios() {
   );
 }
 
-function TabButton({ active, onClick, icon: Icon, children }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-        active
-          ? 'border-primary text-primary'
-          : 'border-transparent text-on-surface-variant hover:text-on-surface'
-      }`}
-    >
-      <Icon size={16} /> {children}
-    </button>
-  );
-}
-
 // ===========================
 // SERVICIOS
 // ===========================
 function ServicesTab() {
   const { services, loading, insertService, updateService, removeService } = useServices();
+  const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
 
@@ -94,30 +91,23 @@ function ServicesTab() {
     const result = editing
       ? await updateService(editing.id, data)
       : await insertService(data);
-    if (!result.error) {
-      setShowForm(false);
-      setEditing(null);
-    } else {
-      alert(userFriendlyError(result.error));
-    }
+    if (result.error) { toast.error(userFriendlyError(result.error)); return; }
+    toast.success('Guardado');
+    setShowForm(false);
+    setEditing(null);
   };
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="Servicios totales" value={total} />
-        <StatCard label="Activos" value={active} />
-        <StatCard label="Precio promedio" value={formatCOP(avgPrice)} />
-      </div>
+      <StatGrid cols={3}>
+        <Stat label="Servicios" icon={Stethoscope} value={String(total)} sub="en el catálogo" />
+        <Stat label="Activos" icon={Boxes} value={String(active)} sub="visibles en jornadas" />
+        <Stat label="Precio promedio" icon={TrendingUp} tone="accent" value={formatCOP(avgPrice)} sub="de los activos" />
+      </StatGrid>
 
-      <div className="flex justify-between items-center">
-        <h3 className="font-semibold text-on-surface">Catálogo</h3>
-        <button
-          onClick={() => { setEditing(null); setShowForm(true); }}
-          className="bg-primary hover:bg-primary-light text-on-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-        >
-          <Plus size={16} /> Nuevo servicio
-        </button>
+      <div className="flex items-center justify-between gap-3">
+        <SectionHeader icon={Stethoscope} title="Catálogo" className="mb-0" />
+        <Button size="sm" icon={Plus} onClick={() => { setEditing(null); setShowForm(true); }}>Nuevo servicio</Button>
       </div>
 
       {loading ? (
@@ -155,38 +145,36 @@ function ServicesTab() {
 function ServiceCard({ service, onEdit, onDelete }) {
   const cat = SERVICE_CATEGORIES.find((c) => c.value === service.category);
   return (
-    <div className="bg-surface-container-lowest rounded-xl p-4 shadow-clinical border border-outline-variant flex flex-col">
-      <div className="flex items-start justify-between mb-2">
+    <Card className="flex flex-col">
+      <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-on-surface truncate">{service.name}</h4>
-          <p className="text-xs text-on-surface-variant">{cat?.label || service.category}</p>
+          <h4 className="font-display text-[15px] font-semibold text-on-surface truncate">{service.name}</h4>
+          <p className="text-[11px] text-on-surface-variant mt-0.5">{cat?.label || service.category}</p>
         </div>
-        <div className="flex gap-1">
-          <button onClick={onEdit} className="text-on-surface-variant hover:text-primary p-1" title="Editar">
+        <div className="flex gap-0.5 flex-shrink-0">
+          <button onClick={onEdit} className="text-on-surface-variant hover:text-primary hover:bg-surface-container-low p-1.5 rounded-lg transition-colors" title="Editar">
             <Edit2 size={14} />
           </button>
-          <button onClick={onDelete} className="text-on-surface-variant hover:text-error p-1" title="Eliminar">
+          <button onClick={onDelete} className="text-on-surface-variant hover:text-error hover:bg-error-container/40 p-1.5 rounded-lg transition-colors" title="Eliminar">
             <Trash2 size={14} />
           </button>
         </div>
       </div>
       {service.description && (
-        <p className="text-xs text-on-surface-variant mb-3 line-clamp-2">{service.description}</p>
+        <p className="text-[11.5px] text-on-surface-variant mb-3 line-clamp-2">{service.description}</p>
       )}
-      <div className="flex items-end justify-between mt-auto pt-2 border-t border-outline-variant">
+      <div className="flex items-end justify-between gap-3 mt-auto pt-3 hairline">
         <div>
-          <p className="text-xs text-on-surface-variant">Precio</p>
-          <p className="font-bold text-primary">{formatCOP(service.price)}</p>
+          <p className="text-[10px] uppercase tracking-wider text-on-surface-variant">Precio</p>
+          <p className="font-display text-lg font-semibold text-primary tnum leading-none mt-0.5">{formatCOP(service.price)}</p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-on-surface-variant">Duración</p>
-          <p className="text-sm font-medium text-on-surface">{service.duration_min || 0} min</p>
+          <p className="text-[10px] uppercase tracking-wider text-on-surface-variant">Duración</p>
+          <p className="text-[13px] font-semibold text-on-surface tnum mt-0.5">{service.duration_min || 0} min</p>
         </div>
-        {!service.active && (
-          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Inactivo</span>
-        )}
+        {!service.active && <Badge tone="neutral">Inactivo</Badge>}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -279,6 +267,7 @@ function ServiceForm({ service, onSave, onCancel }) {
 // ===========================
 function ProductsTab() {
   const { products, loading, insertProduct, updateProduct, removeProduct } = useProducts();
+  const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
 
@@ -291,46 +280,36 @@ function ProductsTab() {
     const result = editing
       ? await updateProduct(editing.id, data)
       : await insertProduct(data);
-    if (!result.error) {
-      setShowForm(false);
-      setEditing(null);
-    } else {
-      alert(userFriendlyError(result.error));
-    }
+    if (result.error) { toast.error(userFriendlyError(result.error)); return; }
+    toast.success('Guardado');
+    setShowForm(false);
+    setEditing(null);
   };
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="Productos activos" value={active} />
-        <StatCard label="Valor de inventario" value={formatCOP(totalStockValue)} />
-        <StatCard
-          label="Stock bajo"
-          value={lowStock.length}
-          accent={lowStock.length > 0 ? 'warning' : 'default'}
+      <StatGrid cols={3}>
+        <Stat label="Productos activos" icon={Package} value={String(active)} sub={`${total} en total`} />
+        <Stat label="Valor de inventario" icon={Boxes} tone="accent" value={formatCOP(totalStockValue)} sub="a precio de venta" />
+        <Stat
+          label="Stock bajo" icon={AlertTriangle} value={String(lowStock.length)}
+          tone={lowStock.length > 0 ? 'danger' : 'default'} sub="requieren reposición"
         />
-      </div>
+      </StatGrid>
 
       {lowStock.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-amber-900">Productos con stock bajo</p>
-            <p className="text-xs text-amber-800 mt-1">
-              {lowStock.map((p) => p.name).join(', ')}
-            </p>
+        <div className="bg-[#f6e7db]/70 border border-warning/30 rounded-xl p-4 flex items-start gap-3">
+          <AlertTriangle size={18} className="text-warning flex-shrink-0 mt-0.5" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-[#a85b32]">Productos con stock bajo</p>
+            <p className="text-xs text-[#a85b32]/85 mt-1">{lowStock.map((p) => p.name).join(' · ')}</p>
           </div>
         </div>
       )}
 
-      <div className="flex justify-between items-center">
-        <h3 className="font-semibold text-on-surface">Inventario</h3>
-        <button
-          onClick={() => { setEditing(null); setShowForm(true); }}
-          className="bg-primary hover:bg-primary-light text-on-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-        >
-          <Plus size={16} /> Nuevo producto
-        </button>
+      <div className="flex items-center justify-between gap-3">
+        <SectionHeader icon={Package} title="Inventario" className="mb-0" />
+        <Button size="sm" icon={Plus} onClick={() => { setEditing(null); setShowForm(true); }}>Nuevo producto</Button>
       </div>
 
       {loading ? (
@@ -338,15 +317,62 @@ function ProductsTab() {
       ) : products.length === 0 ? (
         <EmptyState icon={Package} message="Aún no tienes productos. Agrega el primero al inventario." />
       ) : (
-        <div className="overflow-x-auto bg-surface-container-lowest rounded-xl border border-outline-variant">
+        <Card pad={false} className="overflow-hidden">
+          {/* Móvil: la tabla de 5 columnas se salía de la pantalla y obligaba a
+              hacer scroll lateral para llegar a los botones. Aquí son tarjetas. */}
+          <ul className="md:hidden divide-y divide-outline-variant">
+            {products.map((p) => {
+              const isLow = p.stock <= (p.low_stock_threshold || 5);
+              const cat = PRODUCT_CATEGORIES.find((c) => c.value === p.category);
+              return (
+                <li key={p.id} className="p-4 flex items-start gap-3">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt={p.name} className="w-11 h-11 rounded-xl object-cover bg-surface-container-low flex-shrink-0" loading="lazy" />
+                  ) : (
+                    <span className="w-11 h-11 rounded-xl bg-surface-container-low flex-shrink-0 flex items-center justify-center text-on-surface-variant">
+                      <Package size={17} />
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-on-surface truncate">{p.name}</p>
+                    <p className="text-[11px] text-on-surface-variant truncate">
+                      {cat?.label || p.category}{p.sku ? ` · SKU ${p.sku}` : ''}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="font-display text-[15px] font-semibold text-on-surface tnum">{formatCOP(p.price)}</span>
+                      <span className={cn(
+                        'text-[10px] font-bold px-2 py-0.5 rounded-full tnum',
+                        isLow ? 'bg-[#f6e7db] text-[#a85b32]' : 'bg-[#e0efe8] text-[#1f6b52]',
+                      )}>
+                        {p.stock} en stock
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    <button onClick={() => { setEditing(p); setShowForm(true); }} className="text-on-surface-variant hover:text-primary p-1.5 rounded-lg hover:bg-surface-container-low transition-colors">
+                      <Edit2 size={15} />
+                    </button>
+                    <button
+                      onClick={async () => { if (confirm(`¿Eliminar "${p.name}"?`)) await removeProduct(p.id); }}
+                      className="text-on-surface-variant hover:text-error p-1.5 rounded-lg hover:bg-error-container/40 transition-colors"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-surface-container-low">
               <tr>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase">Producto</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase">Categoría</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase">Precio</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase">Stock</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-on-surface-variant uppercase">Acciones</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase">Producto</th>
+                <th className="text-left px-4 py-3 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase">Categoría</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase">Precio</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase">Stock</th>
+                <th className="text-right px-4 py-3 text-[10px] font-bold tracking-wider text-on-surface-variant uppercase">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -354,7 +380,7 @@ function ProductsTab() {
                 const isLow = p.stock <= (p.low_stock_threshold || 5);
                 const cat = PRODUCT_CATEGORIES.find((c) => c.value === p.category);
                 return (
-                  <tr key={p.id} className="border-t border-outline-variant hover:bg-surface-container-low">
+                  <tr key={p.id} className="border-t border-outline-variant/50 hover:bg-surface-container-low/60 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {p.image_url ? (
@@ -371,11 +397,12 @@ function ProductsTab() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-on-surface-variant">{cat?.label || p.category}</td>
-                    <td className="px-4 py-3 text-right font-medium">{formatCOP(p.price)}</td>
+                    <td className="px-4 py-3 text-right text-[13px] font-display font-semibold text-on-surface tnum">{formatCOP(p.price)}</td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                        isLow ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'
-                      }`}>
+                      <span className={cn(
+                        'inline-block px-2 py-0.5 rounded-full text-[11px] font-bold tnum',
+                        isLow ? 'bg-[#f6e7db] text-[#a85b32]' : 'bg-[#e0efe8] text-[#1f6b52]',
+                      )}>
                         {p.stock}
                       </span>
                     </td>
@@ -401,7 +428,8 @@ function ProductsTab() {
               })}
             </tbody>
           </table>
-        </div>
+          </div>
+        </Card>
       )}
 
       {showForm && (
@@ -540,6 +568,7 @@ function ProductForm({ product, onSave, onCancel }) {
 // ===========================
 function SalesTab() {
   const { sales, loading, createSale, cancelSale, refetchSales } = useSales();
+  const toast = useToast();
   const { services } = useServices();
   const { products } = useProducts();
   const [showForm, setShowForm] = useState(false);
@@ -549,9 +578,11 @@ function SalesTab() {
   const totalRevenue = completedSales.reduce((sum, s) => sum + (s.total || 0), 0);
   const avgSale = completedSales.length > 0 ? Math.round(totalRevenue / completedSales.length) : 0;
 
+  // El filtro va DENTRO del memo: `completedSales` es un array nuevo en cada
+  // render, así que como dependencia no memoizaba nada.
   const salesByJornada = useMemo(() => {
     const grouped = {};
-    completedSales.forEach((s) => {
+    sales.filter((s) => s.status === 'completada').forEach((s) => {
       if (!s.jornadas) return;
       const key = `${s.jornadas.city}-${s.jornadas.date}`;
       if (!grouped[key]) {
@@ -561,31 +592,27 @@ function SalesTab() {
       grouped[key].total += s.total || 0;
     });
     return Object.values(grouped).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
-  }, [completedSales]);
+  }, [sales]);
 
   const handleCreate = async (data) => {
     const result = await createSale(data);
-    if (!result.error) {
-      setShowForm(false);
-    } else {
-      alert(userFriendlyError(result.error));
-    }
+    if (result.error) { toast.error(userFriendlyError(result.error)); return; }
+    toast.success('Venta registrada');
+    setShowForm(false);
   };
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard label="Total ventas" value={totalSales} />
-        <StatCard label="Ingresos totales" value={formatCOP(totalRevenue)} />
-        <StatCard label="Venta promedio" value={formatCOP(avgSale)} />
-      </div>
+      <StatGrid cols={3}>
+        <Stat label="Ventas" icon={Receipt} value={String(totalSales)} sub={`${completedSales.length} completadas`} />
+        <Stat label="Ingresos" icon={TrendingUp} tone="accent" value={formatCOP(totalRevenue)} sub="histórico" />
+        <Stat label="Venta promedio" icon={ShoppingCart} value={formatCOP(avgSale)} sub="por transacción" />
+      </StatGrid>
 
       {salesByJornada.length > 0 && (
-        <div className="bg-surface-container-lowest rounded-xl p-5 shadow-clinical border border-outline-variant">
-          <h3 className="font-semibold text-on-surface mb-3 flex items-center gap-2">
-            <TrendingUp size={16} /> Top jornadas por ingresos
-          </h3>
-          <div className="space-y-2">
+        <Card>
+          <SectionHeader icon={TrendingUp} title="Top jornadas por ingresos" hint="Las 5 más recientes" />
+          <div className="space-y-1">
             {salesByJornada.map((j, i) => (
               <div key={i} className="flex items-center justify-between py-2 border-b border-outline-variant last:border-0">
                 <div className="flex items-center gap-3">
@@ -595,22 +622,22 @@ function SalesTab() {
                     <p className="text-xs text-on-surface-variant">{formatShortDate(j.date)} · {j.count} ventas</p>
                   </div>
                 </div>
-                <p className="font-bold text-primary">{formatCOP(j.total)}</p>
+                <p className="font-display font-semibold text-primary tnum">{formatCOP(j.total)}</p>
               </div>
             ))}
           </div>
-        </div>
+        </Card>
       )}
 
-      <div className="flex justify-between items-center">
-        <h3 className="font-semibold text-on-surface">Historial de ventas</h3>
-        <button
-          onClick={() => setShowForm(true)}
+      <div className="flex items-center justify-between gap-3">
+        <SectionHeader icon={Receipt} title="Historial de ventas" className="mb-0" />
+        <Button
+          size="sm" icon={Plus}
           disabled={services.length === 0 && products.length === 0}
-          className="bg-primary hover:bg-primary-light text-on-primary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={() => setShowForm(true)}
         >
-          <Plus size={16} /> Nueva venta
-        </button>
+          Nueva venta
+        </Button>
       </div>
 
       {loading ? (
@@ -644,23 +671,31 @@ function SalesTab() {
 
 function SaleCard({ sale, onCancel, onInvoiceEmitted }) {
   const [expanded, setExpanded] = useState(false);
-  const statusStyle = {
-    completada: 'bg-green-100 text-green-700',
-    pendiente: 'bg-yellow-100 text-yellow-700',
-    cancelada: 'bg-gray-100 text-gray-600',
-    reembolsada: 'bg-red-100 text-red-700',
-  }[sale.status] || 'bg-gray-100 text-gray-600';
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl p-4 shadow-clinical border border-outline-variant">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
+    <Card>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex-1 min-w-[220px]">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-on-surface">{formatCOP(sale.total)}</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${statusStyle}`}>{sale.status}</span>
-            <span className="text-xs text-on-surface-variant">{sale.payment_method}</span>
+            <span className="font-display text-lg font-semibold text-on-surface tnum">{formatCOP(sale.total)}</span>
+            <Badge status={sale.status} />
+            <span className="text-[11px] text-on-surface-variant capitalize">{sale.payment_method}</span>
             {sale.status === 'completada' && (
               <EmitInvoiceButton sale={sale} onEmitted={onInvoiceEmitted} compact />
+            )}
+            {/* Venta sin pagar: se cobra en línea. Cuando Bold confirma el pago,
+                el webhook la marca como completada automáticamente. */}
+            {sale.status === 'pendiente' && (sale.total || 0) > 0 && (
+              <PaymentLinkButton
+                amount={sale.total}
+                description={`Venta ${formatShortDate(sale.date)}${sale.patients?.full_name ? ` — ${sale.patients.full_name}` : ''}`}
+                patientId={sale.patient_id}
+                customerName={sale.patients?.full_name}
+                customerPhone={sale.patients?.phone}
+                customerEmail={sale.patients?.email}
+                label="Cobrar"
+                className="!px-2.5 !py-0.5 !text-xs"
+              />
             )}
           </div>
           <div className="flex items-center gap-3 mt-1 text-xs text-on-surface-variant">
@@ -679,21 +714,14 @@ function SaleCard({ sale, onCancel, onInvoiceEmitted }) {
             </a>
           )}
         </div>
-        <div className="flex gap-1">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-xs text-primary hover:underline"
-          >
+        <div className="flex gap-3 flex-shrink-0">
+          <button onClick={() => setExpanded(!expanded)} className="text-xs font-semibold text-primary hover:underline">
             {expanded ? 'Ocultar' : 'Ver items'}
           </button>
           {sale.status === 'completada' && (
             <button
-              onClick={async () => {
-                if (confirm('¿Cancelar esta venta?')) {
-                  await onCancel(sale.id);
-                }
-              }}
-              className="text-xs text-error hover:underline ml-2"
+              onClick={async () => { if (confirm('¿Cancelar esta venta?')) await onCancel(sale.id); }}
+              className="text-xs font-semibold text-error hover:underline"
             >
               Cancelar
             </button>
@@ -716,7 +744,7 @@ function SaleCard({ sale, onCancel, onInvoiceEmitted }) {
       {sale.notes && expanded && (
         <p className="mt-2 text-xs text-on-surface-variant italic">{sale.notes}</p>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -761,7 +789,7 @@ function SaleForm({ services, products, onSave, onCancel }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (items.length === 0) return alert('Agrega al menos un item');
+    if (items.length === 0) return;
     onSave({ items, paymentMethod, notes });
   };
 
@@ -771,7 +799,7 @@ function SaleForm({ services, products, onSave, onCancel }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-medium text-on-surface-variant mb-2">Servicios disponibles</label>
-            <div className="border border-outline-variant rounded-lg max-h-48 overflow-y-auto">
+            <div className="border border-outline-variant rounded-xl max-h-52 overflow-y-auto bg-surface-container-lowest">
               {services.length === 0 ? (
                 <p className="p-3 text-xs text-on-surface-variant">Sin servicios activos</p>
               ) : (
@@ -780,10 +808,10 @@ function SaleForm({ services, products, onSave, onCancel }) {
                     key={s.id}
                     type="button"
                     onClick={() => addItem(s, 'service')}
-                    className="w-full text-left p-2 hover:bg-surface-container-low border-b border-outline-variant last:border-0 flex justify-between text-sm"
+                    className="w-full text-left px-3 py-2.5 hover:bg-surface-container-low border-b border-outline-variant/60 last:border-0 flex justify-between gap-2 text-sm transition-colors"
                   >
-                    <span>{s.name}</span>
-                    <span className="text-on-surface-variant">{formatCOP(s.price)}</span>
+                    <span className="truncate">{s.name}</span>
+                    <span className="text-on-surface-variant tnum flex-shrink-0">{formatCOP(s.price)}</span>
                   </button>
                 ))
               )}
@@ -791,7 +819,7 @@ function SaleForm({ services, products, onSave, onCancel }) {
           </div>
           <div>
             <label className="block text-xs font-medium text-on-surface-variant mb-2">Productos en stock</label>
-            <div className="border border-outline-variant rounded-lg max-h-48 overflow-y-auto">
+            <div className="border border-outline-variant rounded-xl max-h-52 overflow-y-auto bg-surface-container-lowest">
               {products.length === 0 ? (
                 <p className="p-3 text-xs text-on-surface-variant">Sin productos en stock</p>
               ) : (
@@ -800,10 +828,10 @@ function SaleForm({ services, products, onSave, onCancel }) {
                     key={p.id}
                     type="button"
                     onClick={() => addItem(p, 'product')}
-                    className="w-full text-left p-2 hover:bg-surface-container-low border-b border-outline-variant last:border-0 flex justify-between text-sm"
+                    className="w-full text-left px-3 py-2.5 hover:bg-surface-container-low border-b border-outline-variant/60 last:border-0 flex justify-between gap-2 text-sm transition-colors"
                   >
-                    <span>{p.name} <span className="text-xs text-on-surface-variant">({p.stock})</span></span>
-                    <span className="text-on-surface-variant">{formatCOP(p.price)}</span>
+                    <span className="truncate">{p.name} <span className="text-xs text-on-surface-variant tnum">({p.stock})</span></span>
+                    <span className="text-on-surface-variant tnum flex-shrink-0">{formatCOP(p.price)}</span>
                   </button>
                 ))
               )}
@@ -839,9 +867,9 @@ function SaleForm({ services, products, onSave, onCancel }) {
                   </button>
                 </div>
               ))}
-              <div className="flex justify-between items-center p-3 bg-surface-container-low font-semibold">
-                <span>Total</span>
-                <span className="text-primary text-lg">{formatCOP(total)}</span>
+              <div className="flex justify-between items-center p-3.5 bg-surface-container-low font-semibold">
+                <span className="text-sm">Total</span>
+                <span className="font-display text-primary text-xl tnum">{formatCOP(total)}</span>
               </div>
             </div>
           )}
@@ -868,7 +896,7 @@ function SaleForm({ services, products, onSave, onCancel }) {
           />
         </Field>
 
-        <FormActions onCancel={onCancel} submitLabel="Registrar venta" />
+        <FormActions onCancel={onCancel} submitLabel="Registrar venta" disabled={items.length === 0} />
       </form>
     </Modal>
   );
@@ -877,69 +905,31 @@ function SaleForm({ services, products, onSave, onCancel }) {
 // ===========================
 // SHARED UI
 // ===========================
-function StatCard({ label, value, accent = 'default' }) {
-  const accentClass = {
-    default: 'text-on-surface',
-    warning: 'text-amber-600',
-  }[accent];
-  return (
-    <div className="bg-surface-container-lowest rounded-xl p-4 shadow-clinical border border-outline-variant">
-      <p className="text-xs text-on-surface-variant uppercase tracking-wide">{label}</p>
-      <p className={`text-2xl font-bold mt-1 ${accentClass}`}>{value}</p>
-    </div>
-  );
-}
-
+// Estos tres adaptadores mantienen las firmas locales (que usan 40 llamadas en
+// este archivo) pero delegan en el sistema de diseño: así el módulo hereda la
+// hoja inferior en móvil, el cierre con Escape y el bloqueo de scroll sin
+// reescribir cada formulario.
 function EmptyState({ icon: Icon, message }) {
   return (
-    <div className="text-center py-12 bg-surface-container-lowest rounded-xl border border-dashed border-outline-variant">
-      <Icon size={32} className="mx-auto text-on-surface-variant mb-2" />
-      <p className="text-on-surface-variant text-sm">{message}</p>
-    </div>
+    <Card tone="sunken" className="border-dashed">
+      <UIEmptyState icon={Icon} title={message} />
+    </Card>
   );
 }
 
 function Modal({ title, onClose, children, wide = false }) {
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className={`bg-surface-container-lowest rounded-2xl shadow-2xl w-full ${wide ? 'max-w-3xl' : 'max-w-md'} max-h-[90vh] overflow-y-auto`}>
-        <div className="flex items-center justify-between p-5 border-b border-outline-variant sticky top-0 bg-surface-container-lowest">
-          <h3 className="font-semibold text-on-surface">{title}</h3>
-          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface">
-            <X size={20} />
-          </button>
-        </div>
-        <div className="p-5">{children}</div>
-      </div>
-    </div>
+    <UIModal open onClose={onClose} title={title} size={wide ? 'xl' : 'md'}>
+      <div className="pb-2">{children}</div>
+    </UIModal>
   );
 }
 
-function Field({ label, children }) {
+function FormActions({ onCancel, submitLabel = 'Guardar', disabled = false }) {
   return (
-    <div>
-      <label className="block text-xs font-medium text-on-surface-variant mb-1">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function FormActions({ onCancel, submitLabel = 'Guardar' }) {
-  return (
-    <div className="flex gap-2 justify-end pt-2">
-      <button
-        type="button"
-        onClick={onCancel}
-        className="px-4 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-low rounded-lg transition-colors"
-      >
-        Cancelar
-      </button>
-      <button
-        type="submit"
-        className="px-4 py-2 text-sm font-medium bg-primary hover:bg-primary-light text-on-primary rounded-lg transition-colors"
-      >
-        {submitLabel}
-      </button>
+    <div className="flex gap-2.5 pt-2">
+      <Button type="button" variant="outline" className="flex-1" onClick={onCancel}>Cancelar</Button>
+      <Button type="submit" className="flex-[2]" disabled={disabled}>{submitLabel}</Button>
     </div>
   );
 }
