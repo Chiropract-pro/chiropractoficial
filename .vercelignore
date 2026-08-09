@@ -1,0 +1,34 @@
+# ============================================================
+# Qué NO se sube a Vercel al desplegar desde la máquina.
+#
+# CRÍTICO: Vercel CLI NO respeta .gitignore. Sin este archivo,
+# `vercel --prod` intentaba subir 1,4 GB, entre ellos la carpeta
+# "importacion clientes" con ~500 historias clínicas escaneadas de
+# pacientes reales (Ley 1581/2012). Nada de eso debe salir del equipo.
+# ============================================================
+
+# Datos de pacientes — NUNCA
+importacion*/
+*.pdf
+pacientes.json
+citas.json
+revisar.json
+extraido_*.json
+
+# Secretos y credenciales
+credenciales.md
+.env
+.env.*
+
+# Se instala/construye en Vercel, no se sube
+node_modules
+dist
+.git
+
+# Operación y herramientas: no hacen falta para construir el frontend
+scripts/
+n8n-workflows/
+supabase/
+.claude/
+.claude-flow/
+*.log
