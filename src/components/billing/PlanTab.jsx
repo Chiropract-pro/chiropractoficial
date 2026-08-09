@@ -296,7 +296,7 @@ export default function PlanTab() {
   );
 }
 
-function LimitCard({ label, max, value }) {
+function LimitCard({ icon: Icon, label, max, value }) {
   return (
     <div className="bg-surface-container-low rounded-lg p-3">
       <Icon size={14} className="mx-auto text-primary mb-1" />

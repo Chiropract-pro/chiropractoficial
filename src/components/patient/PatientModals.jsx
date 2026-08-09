@@ -134,7 +134,7 @@ export function AppointmentDetailModal({ appointment, open, onClose, onCancel, o
   );
 }
 
-function Row({ label, value }) {
+function Row({ icon: Icon, label, value }) {
   return (
     <div className="flex items-center gap-3">
       <Icon size={16} className="text-on-surface-variant flex-shrink-0" />
