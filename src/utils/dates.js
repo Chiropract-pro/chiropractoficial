@@ -15,16 +15,24 @@
 export const CLINIC_TZ = import.meta.env.VITE_CLINIC_TZ || 'America/Bogota';
 
 /**
+ * Construir un `Intl.DateTimeFormat` cuesta caro (del orden de milisegundos).
+ * Se creaba uno NUEVO en cada llamada, y con 1.433 pacientes eso suponía 1.433
+ * construcciones: el Radar tardaba 3,2 s y congelaba la pantalla. Se crean una
+ * sola vez y se reutilizan.
+ */
+const dateFmt = new Intl.DateTimeFormat('en-CA', {
+  timeZone: CLINIC_TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+});
+const timeFmt = new Intl.DateTimeFormat('en-GB', {
+  timeZone: CLINIC_TZ, hour: '2-digit', minute: '2-digit', hour12: false,
+});
+
+/**
  * Fecha de calendario (YYYY-MM-DD) de un Date, en la zona del consultorio.
  * Usa en-CA porque formatea nativamente como YYYY-MM-DD.
  */
 export function toLocalDateStr(date = new Date()) {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: CLINIC_TZ,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(date);
+  return dateFmt.format(date);
 }
 
 /** Hoy (YYYY-MM-DD) en la zona del consultorio. */
@@ -39,9 +47,7 @@ export function monthStr(date = new Date()) {
 
 /** Hora local HH:MM del consultorio (24h). */
 export function localTimeStr(date = new Date()) {
-  return new Intl.DateTimeFormat('en-GB', {
-    timeZone: CLINIC_TZ, hour: '2-digit', minute: '2-digit', hour12: false,
-  }).format(date);
+  return timeFmt.format(date);
 }
 
 /**

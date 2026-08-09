@@ -58,12 +58,16 @@ export const SEGMENTS = {
 
 export const SEGMENT_LIST = [SEGMENTS.saldo, SEGMENTS.abandono, SEGMENTS.dormido, SEGMENTS.primera];
 
-/** Días desde una fecha YYYY-MM-DD (null si no hay fecha). */
-function daysSince(dateStr) {
+/**
+ * Días desde una fecha YYYY-MM-DD (null si no hay fecha).
+ * `hoy` se recibe ya calculado: antes se resolvía dentro, así que con 1.433
+ * pacientes se calculaba la fecha de hoy 1.433 veces.
+ */
+function daysSince(dateStr, hoy) {
   if (!dateStr) return null;
   const d = parseDateStr(String(dateStr).slice(0, 10));
   if (Number.isNaN(d.getTime())) return null;
-  return Math.floor((parseDateStr(todayStr()) - d) / DAY);
+  return Math.floor((hoy - d) / DAY);
 }
 
 /**
@@ -79,8 +83,7 @@ function recencyScore(days) {
   return 9;
 }
 
-function scorePatient(p, hasFutureAppt, lastTouchDays) {
-  const days = daysSince(p.last_visit);
+function scorePatient(p, hasFutureAppt, lastTouchDays, days) {
   const balance = Number(p.balance_due || 0);
   const visits = Number(p.appointments_count || 0);
   const spent = Number(p.total_spent || 0);
@@ -156,8 +159,9 @@ export function whatsappLink(phone, message) {
  * 1.424 filas solo para pintar tres tarjetas.
  */
 export function computeCandidates(patients = [], appointments = [], touches = {}) {
-  const t = parseDateStr(todayStr());
+  // Una sola vez para toda la lista, no una por paciente.
   const today = todayStr();
+  const t = parseDateStr(today);
   const future = new Set(
     appointments
       .filter((a) => a.date >= today && a.status !== 'cancelada' && a.patient_id)
@@ -166,7 +170,7 @@ export function computeCandidates(patients = [], appointments = [], touches = {}
 
   return patients
     .map((p) => {
-      const days = daysSince(p.last_visit);
+      const days = daysSince(p.last_visit, t);
       const touchedAt = touches[p.id];
       const lastTouchDays = touchedAt ? Math.floor((t - new Date(touchedAt)) / DAY) : null;
       const hasFuture = future.has(p.id);
@@ -188,7 +192,7 @@ export function computeCandidates(patients = [], appointments = [], touches = {}
         segment,
         value: recoverableValue(p),
         reason: reasonFor(p, days, segment),
-        score: scorePatient(p, hasFuture, lastTouchDays),
+        score: scorePatient(p, hasFuture, lastTouchDays, days),
         hasFutureAppointment: hasFuture,
         contactable: Boolean(p.phone || p.email),
         touchedAt: touchedAt || null,
