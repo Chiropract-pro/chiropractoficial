@@ -78,6 +78,13 @@ Deno.serve(async (req) => {
           return jsonResponse({ error: 'Demasiados intentos. Solicita un nuevo código.' }, 429);
         case 'no_patient':
           return jsonResponse({ error: 'No encontramos un paciente registrado con este número. Habla con tu doctor.' }, 404);
+        // Varias personas comparten ese número (familiares, normalmente). El
+        // teléfono no basta para saber quién entra, y entregar la sesión al
+        // primero significaría enseñarle la historia clínica de otro.
+        case 'ambiguous_phone':
+          return jsonResponse({
+            error: 'Este número está registrado para más de un paciente. Pídele a tu consultorio que registre un número propio para tu ficha.',
+          }, 409);
         case 'wrong_code':
           return jsonResponse({ error: 'Código incorrecto.' }, 401);
         case 'invalid_or_expired':
