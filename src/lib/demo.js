@@ -19,7 +19,14 @@ export function isDemoMode() {
   if (typeof window === 'undefined') return false;
   if (import.meta.env.VITE_DEMO_MODE === 'true') return true;
   try {
-    return window.location.hash.includes('demo') || window.location.search.includes('demo=1');
+    // La coincidencia es EXACTA, nunca por subcadena: el hash es además el
+    // enrutador público (`#dr/<slug>`), y hay apellidos que al volverse slug
+    // contienen «demo» — Demorales, De Moya, Demontis. Con `includes` esos
+    // médicos no abrían su perfil: el visitante caía en el consultorio de
+    // ejemplo, con pacientes inventados, creyendo que era la ficha del doctor.
+    const hash = window.location.hash.replace(/^#\/?/, '');
+    if (hash === 'demo') return true;
+    return new URLSearchParams(window.location.search).get('demo') === '1';
   } catch { return false; }
 }
 
