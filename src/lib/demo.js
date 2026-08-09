@@ -49,13 +49,17 @@ function day(offset) {
   }).format(d);
 }
 
+// ⚠️ NOMBRES FICTICIOS. Nunca usar aquí el nombre de un paciente real:
+// este archivo se compila dentro del JavaScript público del sitio, así que
+// cualquiera puede leerlo. (Pasó una vez: dos nombres tomados de notas
+// internas acabaron publicados en producción.)
 const NAMES = [
-  'Martha Ruiz Peña', 'Rocío Henao Vélez', 'Jorge Enrique Salazar', 'Luz Marina Cárdenas',
-  'Andrés Felipe Gómez', 'Carmen Elisa Rojas', 'Wilson Alberto Torres', 'Diana Patricia Muñoz',
-  'Héctor Julio Ramírez', 'Sandra Milena Castro', 'Álvaro Restrepo Díaz', 'Gloria Inés Bedoya',
-  'Fabio Nelson Ospina', 'Yolanda Quintero Ruiz', 'Óscar Iván Mejía', 'Nubia Esperanza Lara',
-  'Ramiro Antonio Vega', 'Claudia Liliana Pardo', 'Efraín Gutiérrez Soto', 'Marleny Sánchez Ríos',
-  'Jairo Hernán Beltrán', 'Amparo Cecilia Nieto', 'Gustavo Adolfo Rincón', 'Blanca Nubia Parra',
+  'Ana Lucía Bermúdez', 'Camilo Andrés Ferreira', 'Beatriz Elena Zambrano', 'Nicolás Otálora',
+  'Paula Ximena Sandoval', 'Julián Esteban Carvajal', 'Mariana Villegas Cortés', 'Sebastián Alzate',
+  'Verónica Pineda Rueda', 'Tomás Eduardo Lozano', 'Isabel Cristina Naranjo', 'Mateo Aguirre Solano',
+  'Daniela Arboleda Pinzón', 'Emilio Vargas Trujillo', 'Natalia Bustamante', 'Felipe Cuéllar Mora',
+  'Adriana Zuluaga Peña', 'Ricardo Espinosa Gil', 'Lorena Camacho Vidal', 'Santiago Buitrago',
+  'Carolina Mendoza Prieto', 'Alejandro Peláez Duque', 'Valentina Ocampo Ruiz', 'Martín Escobar Leal',
 ];
 const CITIES = ['Bogotá', 'Soatá', 'Guamal', 'Muzo', 'Garcés Navas'];
 const STATUS = ['activo', 'en_tratamiento', 'inactivo', 'completado'];
