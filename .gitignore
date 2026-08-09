@@ -67,3 +67,6 @@ session.json
 # Estado local de herramientas de agentes — no versionar
 .claude-flow/
 .env*
+
+# Exportaciones de n8n: llevan tokens de Meta y llaves de Supabase
+n8n-workflows/backup*/
