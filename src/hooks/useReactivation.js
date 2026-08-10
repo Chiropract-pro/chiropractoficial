@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../lib/logger';
+import { isDemoMode } from '../lib/demo';
 import { usePatients, useAppointments } from './useTenantData';
+import { appointmentTypes } from '../utils/format';
 import { todayStr, parseDateStr } from '../utils/dates';
 
 /**
@@ -20,10 +22,14 @@ import { todayStr, parseDateStr } from '../utils/dates';
  * paciente destruye la confianza más rápido de lo que la construye.
  */
 
+const DEMO = isDemoMode();
 const DAY = 86400000;
 const TOUCH_COOLDOWN_DAYS = 21;     // no volver a proponer antes de 3 semanas
 const LOCAL_TOUCH_KEY = 'chiro_reactivation_touches';
-const DEFAULT_TICKET = 150000;      // tarifa de primera consulta (utils/format)
+// Tarifa de referencia cuando el paciente no tiene histórico de pagos. Sale de
+// utils/format, que ya lee las tarifas del consultorio: tenerla quemada aquí
+// hacía que el Radar estimara el valor recuperable con el precio viejo.
+const DEFAULT_TICKET = appointmentTypes.find((t) => t.value === 'primera_consulta')?.price || 175000;
 
 export const SEGMENTS = {
   saldo: {
@@ -233,6 +239,9 @@ export function useReactivation() {
       try { return JSON.parse(localStorage.getItem(LOCAL_TOUCH_KEY) || '{}'); } catch { return {}; }
     };
     (async () => {
+      // En demostración los toques viven en localStorage: consultar la tabla
+      // con el tenant de ejemplo devuelve 400, porque no es un UUID.
+      if (DEMO) { setTouches(readLocal()); setPersisted(false); return; }
       if (!tenantId) return;
       const { data, error } = await supabase
         .from('reactivation_touches')
