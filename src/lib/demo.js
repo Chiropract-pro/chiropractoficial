@@ -203,6 +203,64 @@ export const DEMO_TABLES = {
 
 export const DEMO_SALES = sales;
 
+// ── Conversaciones de WhatsApp ──────────────────────────────────────────────
+// Nombres inventados, como todo lo demás de la demostración.
+const hace = (min) => new Date(Date.now() - min * 60000).toISOString();
+
+export const DEMO_CONVERSATIONS = [
+  {
+    id: 'conv-1', phone: '573104445566', contact_name: 'Marcela Ospina',
+    patient_id: 'p-1', unread_count: 2, last_direction: 'inbound',
+    last_message_text: '¿Todavía tienen cupo para el jueves?',
+    last_message_at: hace(4), last_inbound_at: hace(4),
+    window_expires_at: new Date(Date.now() + 23 * 3600000).toISOString(),
+    needs_human: false, last_campaign: 'reactivacion-dormidos',
+  },
+  {
+    id: 'conv-2', phone: '573159998877', contact_name: 'Andrés Gaviria',
+    patient_id: 'p-2', unread_count: 0, last_direction: 'outbound',
+    last_message_text: 'Le confirmo su cita del martes a las 10:00.',
+    last_message_at: hace(75), last_inbound_at: hace(120),
+    window_expires_at: new Date(Date.now() + 21 * 3600000).toISOString(),
+    needs_human: false, last_campaign: null,
+  },
+  {
+    id: 'conv-3', phone: '573201112233', contact_name: 'Liliana Rueda',
+    patient_id: null, unread_count: 1, last_direction: 'inbound',
+    last_message_text: 'Quiero hablar con el doctor directamente, por favor.',
+    last_message_at: hace(190), last_inbound_at: hace(190),
+    window_expires_at: new Date(Date.now() + 20 * 3600000).toISOString(),
+    needs_human: true, last_campaign: null,
+  },
+  {
+    id: 'conv-4', phone: '573007776655', contact_name: 'Jorge Peñaloza',
+    patient_id: 'p-4', unread_count: 0, last_direction: 'outbound',
+    last_message_text: 'Hola Jorge, hace un tiempo no lo vemos por el consultorio…',
+    last_message_at: hace(1500), last_inbound_at: null,
+    window_expires_at: null,
+    needs_human: false, last_campaign: 'reactivacion-dormidos',
+  },
+];
+
+export const DEMO_WA_MESSAGES = {
+  'conv-1': [
+    { id: 'm1', direction: 'outbound', sent_by: 'campana', content: 'Hola Marcela, hace unos meses no la vemos por el consultorio. ¿Le gustaría retomar su tratamiento? Tenemos agenda esta semana.', created_at: hace(180), template_name: 'reactivacion_paciente', status: 'read' },
+    { id: 'm2', direction: 'inbound', sent_by: 'paciente', content: 'Hola! Sí, me quedé a mitad del tratamiento por trabajo', created_at: hace(90), status: 'delivered' },
+    { id: 'm3', direction: 'outbound', sent_by: 'bot', content: 'Con gusto la ayudo a retomar. Tenemos espacio el jueves a las 9:00, 11:00 y 15:00. ¿Cuál le sirve?', created_at: hace(88), status: 'delivered' },
+    { id: 'm4', direction: 'inbound', sent_by: 'paciente', content: '¿Todavía tienen cupo para el jueves?', created_at: hace(4), status: 'delivered' },
+  ],
+  'conv-2': [
+    { id: 'm5', direction: 'inbound', sent_by: 'paciente', content: 'Buenas, quiero confirmar mi cita', created_at: hace(120), status: 'delivered' },
+    { id: 'm6', direction: 'outbound', sent_by: 'bot', content: 'Le confirmo su cita del martes a las 10:00.', created_at: hace(75), status: 'read' },
+  ],
+  'conv-3': [
+    { id: 'm7', direction: 'inbound', sent_by: 'paciente', content: 'Quiero hablar con el doctor directamente, por favor.', created_at: hace(190), status: 'delivered' },
+  ],
+  'conv-4': [
+    { id: 'm8', direction: 'outbound', sent_by: 'campana', content: 'Hola Jorge, hace un tiempo no lo vemos por el consultorio…', created_at: hace(1500), template_name: 'reactivacion_paciente', status: 'sent' },
+  ],
+};
+
 /** Suscripción de ejemplo: en demostración la pestaña Plan enseña un Pro activo. */
 export const DEMO_SUBSCRIPTION = {
   tenant_id: 'demo-tenant',

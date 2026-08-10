@@ -11,6 +11,7 @@ import { useIdleTimeout } from './hooks/useIdleTimeout';
 import AppShell from './components/layout/AppShell';
 import Dashboard from './components/Dashboard';
 import Pacientes from './components/Pacientes';
+import Conversaciones from './components/conversaciones/Conversaciones';
 import Citas from './components/Citas';
 import Jornadas from './components/Jornadas';
 import ProductosServicios from './components/ProductosServicios';
@@ -71,6 +72,7 @@ function CRMApp() {
       case 'reactivacion': return <Reactivacion />;
       case 'jornadas': return <Jornadas />;
       case 'productos': return <ProductosServicios />;
+      case 'conversaciones': return <Conversaciones />;
       case 'finanzas': return <Finanzas />;
       case 'settings': return <Settings />;
       default: return <Dashboard onNavigate={setActiveModule} />;
