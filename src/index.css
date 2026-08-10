@@ -275,3 +275,44 @@ body {
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
 .h-safe-nav { height: calc(4rem + env(safe-area-inset-bottom, 0px)); }
+
+/* ── Impresión del manual ───────────────────────────────────────────────────
+   «Descargar PDF» dispara window.print(): el diálogo del navegador ofrece
+   «Guardar como PDF» y sale un archivo real, sin cargar ninguna librería.
+   Aquí se recorta la página para que el PDF traiga SOLO el manual — sin menú,
+   sin barra superior y sin el aviso de demostración. */
+@media print {
+  body * { visibility: hidden; }
+  #manual-imprimible, #manual-imprimible * { visibility: visible; }
+
+  #manual-imprimible {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    padding: 0;
+  }
+
+  /* Lo que solo sirve en pantalla: buscador, índice y el propio botón. */
+  [data-sin-imprimir] { display: none !important; }
+
+  /* Nada de cortar una sección a la mitad entre dos páginas. */
+  #manual-imprimible article {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #ddd6c8;
+    background: #fff;
+  }
+
+  /* Tinta: fondos claros y texto negro, para que se lea impreso en papel. */
+  #manual-imprimible, #manual-imprimible * {
+    color: #1a1c1a !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  #manual-imprimible article p[class*="f6e7db"],
+  #manual-imprimible article p:has(> svg) {
+    border: 1px solid #d9c4a8 !important;
+  }
+
+  @page { margin: 16mm 14mm; }
+}

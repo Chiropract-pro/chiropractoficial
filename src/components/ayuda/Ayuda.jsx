@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AlertTriangle, BookOpen, Search, X } from 'lucide-react';
+import { AlertTriangle, BookOpen, Download, Search, X } from 'lucide-react';
 
 /**
  * Visor del manual. Sirve tanto al CRM como al portal del paciente: recibe ya
@@ -27,7 +27,7 @@ export default function Ayuda({ manual, etiquetaRol, compacto = false }) {
   }, [manual.secciones, q]);
 
   return (
-    <div className={compacto ? 'space-y-4' : 'space-y-5 sm:space-y-6'}>
+    <div id="manual-imprimible" className={compacto ? 'space-y-4' : 'space-y-5 sm:space-y-6'}>
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-on-surface-variant">
@@ -38,14 +38,26 @@ export default function Ayuda({ manual, etiquetaRol, compacto = false }) {
           </h1>
           <p className="text-sm text-on-surface-variant mt-1">{manual.subtitulo}</p>
         </div>
-        {etiquetaRol && (
-          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-tertiary-container text-on-tertiary-container">
-            {etiquetaRol}
-          </span>
-        )}
+        <div className="flex items-center gap-2.5">
+          {etiquetaRol && (
+            <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-tertiary-container text-on-tertiary-container">
+              {etiquetaRol}
+            </span>
+          )}
+          {/* Imprimir es también «Guardar como PDF» en el diálogo del navegador:
+              da un archivo real sin cargar ninguna librería. */}
+          <button
+            type="button"
+            onClick={() => window.print()}
+            data-sin-imprimir
+            className="inline-flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1.5 rounded-lg border border-outline-variant text-on-surface-variant hover:text-on-surface hover:border-outline transition-colors"
+          >
+            <Download size={13} /> Descargar PDF
+          </button>
+        </div>
       </header>
 
-      <div className="relative">
+      <div className="relative" data-sin-imprimir>
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
         <input
           value={q}
@@ -67,7 +79,7 @@ export default function Ayuda({ manual, etiquetaRol, compacto = false }) {
 
       {/* Índice: solo cuando hay de dónde escoger */}
       {!q && secciones.length > 3 && (
-        <nav aria-label="Índice del manual" className="flex flex-wrap gap-1.5">
+        <nav data-sin-imprimir aria-label="Índice del manual" className="flex flex-wrap gap-1.5">
           {secciones.map((s) => (
             <a
               key={s.id}
