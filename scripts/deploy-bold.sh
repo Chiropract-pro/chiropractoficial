@@ -14,7 +14,16 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-ENV="${1:-test}"
+# Sin argumento NO se asume nada: el valor por defecto era «test» y bastaba
+# ejecutar el script a secas para dejar producción cobrando con llaves de
+# pruebas, en silencio y sin que nada lo delatara.
+ENV="${1:-}"
+if [ -z "$ENV" ]; then
+  echo "Uso: ./scripts/deploy-bold.sh [test|prod]"
+  echo "   test  → llaves de PRUEBAS"
+  echo "   prod  → llaves de PRODUCCIÓN (cobros reales)"
+  exit 1
+fi
 CRED_FILE="credenciales.md"
 PROJECT_REF="dqxffnibxizlfaeddzrz"
 
@@ -26,7 +35,12 @@ fi
 # recortan ANTES de aplicar el patrón (si no, esa llave se pierde silenciosamente
 # y se termina mandando la llave equivocada -> Bold responde 403).
 # Orden en el archivo: [Pruebas] identidad, secreta ; [Produccion] identidad, secreta
-mapfile -t KEYS < <(sed 's/[[:space:]]*$//' "$CRED_FILE" | grep -oE '^[A-Za-z0-9_-]{20,}$' || true)
+# Nada de `mapfile`: es de bash 4 y macOS trae el 3.2, así que el script
+# moría con «mapfile: command not found» antes de leer una sola llave.
+KEYS=()
+while IFS= read -r _k; do
+  [ -n "$_k" ] && KEYS+=("$_k")
+done < <(sed 's/[[:space:]]*$//' "$CRED_FILE" | grep -oE '^[A-Za-z0-9_-]{20,}$' || true)
 
 if [ "${#KEYS[@]}" -lt 4 ]; then
   echo "❌ Esperaba 4 llaves en $CRED_FILE (identidad+secreta de pruebas y de producción); encontré ${#KEYS[@]}"
