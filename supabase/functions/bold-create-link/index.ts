@@ -29,6 +29,8 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const BOLD_IDENTITY_KEY = Deno.env.get('BOLD_IDENTITY_KEY')!;
+// Credencial propia del bot de WhatsApp para pedir links de pago.
+const BOT_API_SECRET = Deno.env.get('BOT_API_SECRET') || '';
 const BOLD_API_URL = Deno.env.get('BOLD_API_URL') || 'https://integrations.api.bold.co/online/link/v1';
 
 const corsHeaders = {
@@ -73,11 +75,19 @@ Deno.serve(async (req) => {
     // ── AUTORIZACIÓN ─────────────────────────────────────────────────────────
     // Un link de pago cobra dinero real: exigimos service_role (n8n/backend) o un
     // usuario del CRM autenticado que sea miembro aceptado de ESE consultorio.
+    // El bot de WhatsApp tiene su propia credencial (`BOT_API_SECRET`) en vez
+    // de reutilizar la service_role. Dos razones: se revoca sin tocar nada más,
+    // y `SUPABASE_SERVICE_ROLE_KEY` dejó de coincidir con la llave del proyecto
+    // tras la rotación de llaves — comparar contra ella dejaba al bot fuera sin
+    // ninguna señal útil ("Sesión inválida" con la llave correcta en la mano).
+    const botSecret = (req.headers.get('x-bot-secret') || '').trim();
+    const esBot = BOT_API_SECRET.length > 0 && botSecret === BOT_API_SECRET;
+
     const authHeader = req.headers.get('Authorization') || '';
     const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
-    if (!bearer) return json({ error: 'No autenticado' }, 401);
+    if (!bearer && !esBot) return json({ error: 'No autenticado' }, 401);
 
-    if (bearer !== SERVICE_ROLE) {
+    if (!esBot && bearer !== SERVICE_ROLE) {
       const userClient = createClient(SUPABASE_URL, ANON_KEY, {
         global: { headers: { Authorization: `Bearer ${bearer}` } },
       });
