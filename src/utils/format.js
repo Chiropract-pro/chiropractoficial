@@ -34,12 +34,29 @@ export function formatShortDate(dateStr) {
 
 export const cities = ['Bogotá', 'Soatá', 'Guamal', 'Muzo', 'Garcés Navas'];
 
+// Tarifas de fábrica. Cada consultorio puede sobrescribirlas desde
+// Ajustes → Tarifas; esto es solo el punto de partida y la red de seguridad
+// para las claves que no haya configurado.
 export const appointmentTypes = [
-  { value: 'primera_consulta', label: 'Primera consulta', price: 150000 },
-  { value: 'seguimiento', label: 'Seguimiento', price: 100000 },
-  { value: 'jornada', label: 'Jornada', price: 150000 },
+  { value: 'primera_consulta', label: 'Primera consulta', price: 175000 },
+  { value: 'seguimiento', label: 'Seguimiento', price: 175000 },
+  { value: 'jornada', label: 'Jornada', price: 175000 },
   { value: 'emergencia', label: 'Emergencia', price: 200000 },
 ];
+
+/**
+ * Tipos de cita con las tarifas del consultorio aplicadas.
+ * Un valor guardado solo gana si es un número finito y no negativo: así una
+ * fila corrupta en la base no hace que el sistema agende citas a NaN pesos.
+ */
+export function getAppointmentTypes(tenant) {
+  const custom = tenant?.appointment_prices;
+  if (!custom || typeof custom !== 'object') return appointmentTypes;
+  return appointmentTypes.map((t) => {
+    const v = Number(custom[t.value]);
+    return Number.isFinite(v) && v >= 0 ? { ...t, price: Math.round(v) } : t;
+  });
+}
 
 export const patientStatuses = [
   { value: 'activo', label: 'Activo', color: 'green' },

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Building2, CheckCircle, CreditCard, FileText, Globe, Save, User, Users } from 'lucide-react';
+import { Building2, CheckCircle, CreditCard, FileText, Globe, Save, Tag, User, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import TeamTab from './TeamTab';
 import BillingSettings from './billing/BillingSettings';
 import PlanTab from './billing/PlanTab';
+import PricingTab from './settings/PricingTab';
 import PublicProfileTab from './directory/PublicProfileTab';
 import { userFriendlyError } from '../lib/logger';
 import { Card, PageHeader, SectionHeader } from './ui/Card';
@@ -14,6 +15,7 @@ import Button from './ui/Button';
 
 const TABS = [
   { id: 'clinic', label: 'Consultorio', icon: Building2 },
+  { id: 'pricing', label: 'Tarifas', icon: Tag },
   { id: 'directory', label: 'Perfil público', icon: Globe },
   { id: 'team', label: 'Equipo', icon: Users },
   { id: 'billing', label: 'Facturación DIAN', icon: FileText },
@@ -130,6 +132,7 @@ export default function Settings() {
           </Card>
         )}
 
+        {activeTab === 'pricing' && <PricingTab />}
         {activeTab === 'directory' && <PublicProfileTab />}
         {activeTab === 'team' && <TeamTab />}
         {activeTab === 'billing' && <BillingSettings />}

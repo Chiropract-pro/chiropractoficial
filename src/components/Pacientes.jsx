@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react';
 import {
   Activity, ChevronRight, Download, Plus, Search, ShieldAlert, Users, Wallet, X,
 } from 'lucide-react';
-import { patientStatuses, formatCOP, formatShortDate } from '../utils/format';
+import { patientStatuses, formatCOP, formatShortDate, getAppointmentTypes } from '../utils/format';
 import { usePatients } from '../hooks/useTenantData';
+import { useAuth } from '../contexts/AuthContext';
+import PaymentLinkButton from './PaymentLinkButton';
 import { downloadCsv } from '../utils/csv';
 import Button from './ui/Button';
 import Badge from './ui/Badge';
@@ -26,6 +28,15 @@ export default function Pacientes({ focusPatient, onFocusHandled }) {
   const [selected, setSelected] = useState(null);
   const [formFor, setFormFor] = useState(undefined); // undefined = cerrado · null = nuevo · obj = editar
   const [limit, setLimit] = useState(PAGE);
+
+  // Monto sugerido al cobrar desde la lista: la tarifa de seguimiento, que es
+  // la cita más frecuente. Quien cobra puede cambiarlo antes de generar.
+  const { tenant } = useAuth();
+  const suggested = getAppointmentTypes(tenant).find((t) => t.value === 'seguimiento')?.price || 0;
+  const chargeFor = (p) => ({
+    amount: Number(p.balance_due || 0) > 0 ? Number(p.balance_due) : suggested,
+    description: Number(p.balance_due || 0) > 0 ? `Saldo pendiente — ${p.full_name}` : 'Consulta quiropráctica',
+  });
 
   // La paleta ⌘K puede aterrizar aquí con un paciente ya elegido. Se deriva en
   // vez de copiarlo a estado dentro de un efecto: así no hay render en cascada
@@ -157,8 +168,8 @@ export default function Pacientes({ focusPatient, onFocusHandled }) {
             {/* Móvil y tablet: tarjetas */}
             <ul className="lg:hidden divide-y divide-outline-variant">
               {filtered.slice(0, limit).map((p) => (
-                <li key={p.id}>
-                  <button onClick={() => setSelected(p)} className="w-full text-left p-4 flex items-start gap-3 hover:bg-surface-container-low/60 transition-colors">
+                <li key={p.id} className="flex items-stretch">
+                  <button onClick={() => setSelected(p)} className="flex-1 min-w-0 text-left p-4 flex items-start gap-3 hover:bg-surface-container-low/60 transition-colors">
                     <span className="w-10 h-10 rounded-xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center text-[13px] font-bold flex-shrink-0">
                       {initials(p.full_name)}
                     </span>
@@ -183,6 +194,17 @@ export default function Pacientes({ focusPatient, onFocusHandled }) {
                     </span>
                     <ChevronRight size={16} className="text-on-surface-variant/50 flex-shrink-0 mt-2.5" />
                   </button>
+                  <span className="flex items-center pr-3 pl-1">
+                    <PaymentLinkButton
+                      {...chargeFor(p)}
+                      patientId={p.id}
+                      customerName={p.full_name}
+                      customerPhone={p.phone}
+                      customerEmail={p.email}
+                      label="Cobrar"
+                      className="!px-2.5 !py-1.5 !text-[11px] !font-semibold !rounded-lg"
+                    />
+                  </span>
                 </li>
               ))}
             </ul>
@@ -192,7 +214,7 @@ export default function Pacientes({ focusPatient, onFocusHandled }) {
               <table className="w-full">
                 <thead className="sticky top-0 z-10">
                   <tr className="bg-surface-container-low border-b border-outline-variant">
-                    {['Paciente', 'Contacto', 'Ciudad', 'Estado', 'Última visita', 'Facturado', 'Saldo', ''].map((h, i) => (
+                    {['Paciente', 'Contacto', 'Ciudad', 'Estado', 'Última visita', 'Facturado', 'Saldo', '', ''].map((h, i) => (
                       <th
                         key={h || i}
                         className={cn(
@@ -236,6 +258,17 @@ export default function Pacientes({ focusPatient, onFocusHandled }) {
                         </td>
                         <td className={cn('px-4 py-2.5 text-[13px] font-display font-semibold text-right tnum', debt > 0 ? 'text-danger' : 'text-on-surface-variant/40')}>
                           {debt > 0 ? formatCOP(debt) : '—'}
+                        </td>
+                        <td className="px-2 py-2.5" onClick={(e) => e.stopPropagation()}>
+                          <PaymentLinkButton
+                            {...chargeFor(p)}
+                            patientId={p.id}
+                            customerName={p.full_name}
+                            customerPhone={p.phone}
+                            customerEmail={p.email}
+                            label="Cobrar"
+                            className="!px-2.5 !py-1 !text-[11px] !font-semibold !rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                          />
                         </td>
                         <td className="px-3 py-2.5 w-8">
                           <ChevronRight size={15} className="text-on-surface-variant/40 group-hover:text-primary transition-colors" />

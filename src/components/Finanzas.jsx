@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  AlertTriangle, Building2, CalendarRange, Download, MapPin, Plus, Target, TrendingUp, Wallet,
+  AlertTriangle, Building2, Download, MapPin, Plus, Receipt, Target, TrendingUp, Wallet,
 } from 'lucide-react';
 import { formatCOP, formatDate } from '../utils/format';
 import { useTransactions, usePatients } from '../hooks/useTenantData';
@@ -14,10 +14,26 @@ import { Card, EmptyState, PageHeader, SectionHeader } from './ui/Card';
 import { ProgressRing, Stat, StatGrid } from './ui/Stat';
 import Modal from './ui/Modal';
 import { Field, FormGrid, Input, Select, Textarea } from './ui/Field';
-import { todayStr as today, toLocalDateStr, addDaysStr, parseDateStr } from '../utils/dates';
-
+import { todayStr as today, addDaysStr, parseDateStr } from '../utils/dates';
+import PeriodPicker, { buildPeriodPresets, periodLabel } from './finanzas/PeriodPicker';
+import MovementsTable from './finanzas/MovementsTable';
 
 const MONTHLY_GOAL = 5000000;
+const DAY_MS = 86400000;
+
+const pad = (n) => String(n).padStart(2, '0');
+const lastDayOf = (y, m) => `${y}-${pad(m)}-${pad(new Date(y, m, 0).getDate())}`;
+const daysBetween = (from, to) => Math.round((parseDateStr(to) - parseDateStr(from)) / DAY_MS) + 1;
+
+/** Un rango "de meses completos" va del día 1 al último día de un mes. Solo en
+ *  ese caso tiene sentido comparar contra la meta mensual. */
+function wholeMonthsIn(from, to) {
+  if (!from.endsWith('-01')) return 0;
+  const [ty, tm] = [Number(to.slice(0, 4)), Number(to.slice(5, 7))];
+  if (to !== lastDayOf(ty, tm)) return 0;
+  const [fy, fm] = [Number(from.slice(0, 4)), Number(from.slice(5, 7))];
+  return (ty - fy) * 12 + (tm - fm) + 1;
+}
 
 export default function Finanzas() {
   const { transactions, loading, insertTransaction } = useTransactions();
@@ -27,26 +43,45 @@ export default function Finanzas() {
   const [saving, setSaving] = useState(false);
 
   const todayStr = today();
-  const monthStr = todayStr.substring(0, 7);
-  const monthName = parseDateStr(`${monthStr}-01`).toLocaleDateString('es-CO', { month: 'long' });
+  // Arranca en el mes en curso, que es el comportamiento que había antes de
+  // que existiera el selector.
+  const [period, setPeriod] = useState(() => {
+    const mes = buildPeriodPresets(todayStr).find((p) => p.id === 'mes');
+    return { from: mes.from, to: mes.to };
+  });
 
   const m = useMemo(() => {
-    const now = new Date();
     const incomes = transactions.filter((t) => t.type === 'income');
-    const weekStart = new Date(now); weekStart.setHours(12, 0, 0, 0);
-    weekStart.setDate(now.getDate() - now.getDay());
-    const weekStartStr = toLocalDateStr(weekStart);
-    const lastMonthStr = toLocalDateStr(new Date(now.getFullYear(), now.getMonth() - 1, 1, 12)).substring(0, 7);
+    const sum = (rows) => rows.reduce((s, t) => s + (Number(t.amount) || 0), 0);
+    const within = (rows, from, to) => rows.filter((t) => t.date && t.date >= from && t.date <= to);
 
-    const sum = (rows) => rows.reduce((s, t) => s + t.amount, 0);
-    const monthIncome = sum(incomes.filter((t) => t.date?.startsWith(monthStr)));
-    const lastMonthIncome = sum(incomes.filter((t) => t.date?.startsWith(lastMonthStr)));
+    const periodTx = within(transactions, period.from, period.to);
+    const periodIncomes = within(incomes, period.from, period.to);
+    const periodIncome = sum(periodIncomes);
 
-    // Comparativa de 6 meses
+    // Periodo inmediatamente anterior, del mismo largo: sirve para comparar
+    // cualquier rango, no solo meses.
+    const span = daysBetween(period.from, period.to);
+    const prevTo = addDaysStr(-1, parseDateStr(period.from));
+    const prevFrom = addDaysStr(-(span - 1), parseDateStr(prevTo));
+    const prevIncome = sum(within(incomes, prevFrom, prevTo));
+
+    // Serie diaria para el sparkline. En rangos largos no aporta y cuesta, así
+    // que se omite por encima de un trimestre.
+    const daily = span <= 92
+      ? Array.from({ length: span }, (_, i) => {
+        const d = addDaysStr(i, parseDateStr(period.from));
+        return sum(incomes.filter((t) => t.date === d));
+      })
+      : undefined;
+
+    // Comparativa de 6 meses, anclada al final del periodo elegido.
+    const endY = Number(period.to.slice(0, 4));
+    const endM = Number(period.to.slice(5, 7));
     const months = [];
     for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1, 12);
-      const key = toLocalDateStr(d).substring(0, 7);
+      const d = new Date(endY, endM - 1 - i, 1, 12);
+      const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
       months.push({
         key,
         label: d.toLocaleDateString('es-CO', { month: 'short' }).replace('.', ''),
@@ -54,35 +89,29 @@ export default function Finanzas() {
       });
     }
 
-    // Serie diaria de 30 días para el sparkline
-    const daily = Array.from({ length: 30 }, (_, i) => {
-      const d = addDaysStr(i - 29);
-      return sum(incomes.filter((t) => t.date === d));
-    });
-
     const bySource = { consultorio: 0, jornadas: 0 };
     const byCity = {};
-    for (const t of incomes.filter((x) => x.date?.startsWith(monthStr))) {
-      if (t.category === 'jornada') bySource.jornadas += t.amount;
-      else bySource.consultorio += t.amount;
+    for (const t of periodIncomes) {
+      if (t.category === 'jornada') bySource.jornadas += Number(t.amount) || 0;
+      else bySource.consultorio += Number(t.amount) || 0;
       const city = patients.find((p) => p.id === t.patient_id)?.city || 'Sin ciudad';
-      byCity[city] = (byCity[city] || 0) + t.amount;
+      byCity[city] = (byCity[city] || 0) + (Number(t.amount) || 0);
     }
 
     return {
-      incomes,
-      todayIncome: sum(incomes.filter((t) => t.date === todayStr)),
-      weekIncome: sum(incomes.filter((t) => t.date >= weekStartStr)),
-      monthIncome,
-      lastMonthIncome,
-      delta: lastMonthIncome > 0 ? Math.round(((monthIncome - lastMonthIncome) / lastMonthIncome) * 100) : undefined,
+      periodTx,
+      periodIncome,
+      prevIncome,
+      count: periodIncomes.length,
+      avgPerCharge: periodIncomes.length > 0 ? Math.round(periodIncome / periodIncomes.length) : 0,
+      delta: prevIncome > 0 ? Math.round(((periodIncome - prevIncome) / prevIncome) * 100) : undefined,
       months,
       daily,
       bySource,
       byCity,
-      avgPerPatient: patients.length > 0 ? Math.round(monthIncome / patients.length) : 0,
+      span,
     };
-  }, [transactions, patients, monthStr, todayStr]);
+  }, [transactions, patients, period]);
 
   // `balance_due` solo se llena cuando la agenda decía literalmente "Debe"/
   // "Saldo" — las demás cifras del histórico son tarifas o abonos ya pagados.
@@ -94,7 +123,10 @@ export default function Finanzas() {
 
   if (loading && transactions.length === 0) return <LoadingState message="Cargando finanzas…" />;
 
-  const goalPercent = Math.round((m.monthIncome / MONTHLY_GOAL) * 100);
+  const label = periodLabel(period);
+  const monthsInPeriod = wholeMonthsIn(period.from, period.to);
+  const periodGoal = MONTHLY_GOAL * monthsInPeriod;
+  const goalPercent = periodGoal > 0 ? Math.round((m.periodIncome / periodGoal) * 100) : 0;
   const maxMonth = Math.max(...m.months.map((x) => x.income), 1);
   const maxCity = Math.max(...Object.values(m.byCity), 1);
 
@@ -123,43 +155,59 @@ export default function Finanzas() {
           <Button
             variant="outline" size="sm" icon={Download}
             onClick={() => downloadCsv(
-              'transacciones.csv',
-              transactions,
+              `movimientos ${period.from} a ${period.to}.csv`,
+              m.periodTx,
               [
                 { key: 'date', label: 'Fecha' }, { key: 'type', label: 'Tipo' }, { key: 'category', label: 'Categoría' },
                 { key: 'description', label: 'Descripción' }, { key: 'amount', label: 'Monto', format: (v) => v ?? 0 },
               ],
             )}
           >
-            Exportar
+            Exportar periodo
           </Button>
           <Button size="sm" icon={Plus} onClick={() => setShowNewForm(true)}>Registrar ingreso</Button>
         </PageHeader>
       </div>
 
+      {/* Selector de periodo contable */}
+      <div>
+        <Card className="!py-4">
+          <PeriodPicker period={period} onChange={setPeriod} />
+        </Card>
+      </div>
+
       <div>
         <StatGrid>
-          <Stat label="Ingresos hoy" icon={Wallet} value={formatCOP(m.todayIncome)} sub={formatDate(todayStr)} />
-          <Stat label="Esta semana" icon={CalendarRange} value={formatCOP(m.weekIncome)} series={m.daily.slice(-7)} />
-          <Stat label="Este mes" icon={TrendingUp} value={formatCOP(m.monthIncome)} delta={m.delta} series={m.daily} />
-          <Stat label="Promedio/paciente" icon={Target} tone="accent" value={formatCOP(m.avgPerPatient)} sub={`${patients.length} pacientes`} />
+          <Stat label="Ingresos del periodo" icon={Wallet} value={formatCOP(m.periodIncome)} sub={label} series={m.daily} delta={m.delta} />
+          <Stat label="Movimientos" icon={Receipt} value={String(m.count)} sub={m.count === 1 ? 'cobro registrado' : 'cobros registrados'} />
+          <Stat label="Promedio por cobro" icon={Target} value={formatCOP(m.avgPerCharge)} sub={`${m.span} ${m.span === 1 ? 'día' : 'días'}`} />
+          <Stat label="Por cobrar" icon={AlertTriangle} tone="accent" value={formatCOP(totalDebt)} sub={`${debtors.length} ${debtors.length === 1 ? 'paciente' : 'pacientes'}`} />
         </StatGrid>
       </div>
 
       <div className="grid gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
-        {/* Meta */}
+        {/* Meta / resumen del periodo */}
         <div>
           <Card className="h-full">
-            <SectionHeader icon={Target} title="Meta del mes" hint={formatCOP(MONTHLY_GOAL)} />
+            <SectionHeader
+              icon={Target}
+              title={monthsInPeriod > 0 ? 'Meta del periodo' : 'Resumen del periodo'}
+              hint={monthsInPeriod > 0 ? formatCOP(periodGoal) : label}
+            />
             <div className="flex items-center gap-5">
-              <ProgressRing percent={goalPercent} size={124} sublabel="de la meta" />
+              {monthsInPeriod > 0 && <ProgressRing percent={goalPercent} size={124} sublabel="de la meta" />}
               <div className="min-w-0">
-                <p className="font-display text-2xl font-semibold text-on-surface tnum leading-none">{formatCOP(m.monthIncome)}</p>
-                <p className="text-xs text-on-surface-variant mt-1.5 first-letter:uppercase">facturado en {monthName}</p>
+                <p className="font-display text-2xl font-semibold text-on-surface tnum leading-none">{formatCOP(m.periodIncome)}</p>
+                <p className="text-xs text-on-surface-variant mt-1.5">
+                  facturado {monthsInPeriod === 1 ? 'en el mes' : 'en el periodo'}
+                </p>
                 <p className="text-[11px] text-on-surface-variant mt-3 leading-snug">
-                  Faltan <span className="font-semibold text-on-surface tnum">{formatCOP(Math.max(0, MONTHLY_GOAL - m.monthIncome))}</span>
+                  {monthsInPeriod > 0 && (
+                    <>Faltan <span className="font-semibold text-on-surface tnum">{formatCOP(Math.max(0, periodGoal - m.periodIncome))}</span></>
+                  )}
+                  {monthsInPeriod > 0 && totalDebt > 0 && ' · '}
                   {totalDebt > 0 && (
-                    <> · hay <span className="font-semibold text-danger tnum">{formatCOP(totalDebt)}</span> por cobrar</>
+                    <>hay <span className="font-semibold text-danger tnum">{formatCOP(totalDebt)}</span> por cobrar</>
                   )}
                 </p>
               </div>
@@ -197,7 +245,7 @@ export default function Finanzas() {
         {/* Fuente */}
         <div>
           <Card className="h-full">
-            <SectionHeader icon={Building2} title="Ingresos por fuente" hint="Mes en curso" />
+            <SectionHeader icon={Building2} title="Ingresos por fuente" hint={label} />
             <div className="space-y-4">
               {[
                 { icon: Building2, label: 'Consultorio', val: m.bySource.consultorio, cls: 'clinical-gradient' },
@@ -212,7 +260,7 @@ export default function Finanzas() {
                     </div>
                     <div className="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
                       <div
-                        style={{ width: `${m.monthIncome > 0 ? (s.val / m.monthIncome) * 100 : 0}%`, transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)' }}
+                        style={{ width: `${m.periodIncome > 0 ? (s.val / m.periodIncome) * 100 : 0}%`, transition: 'width 0.8s cubic-bezier(0.22,1,0.36,1)' }}
                         className={`${s.cls} h-full rounded-full`}
                       />
                     </div>
@@ -226,7 +274,7 @@ export default function Finanzas() {
         {/* Ciudad */}
         <div>
           <Card className="h-full">
-            <SectionHeader icon={MapPin} title="Ingresos por ciudad" hint="Mes en curso" />
+            <SectionHeader icon={MapPin} title="Ingresos por ciudad" hint={label} />
             <div className="space-y-2.5">
               {Object.entries(m.byCity).filter(([, v]) => v > 0).sort(([, a], [, b]) => b - a).slice(0, 6).map(([city, income]) => (
                 <div key={city} className="flex items-center gap-3">
@@ -242,10 +290,15 @@ export default function Finanzas() {
                   </span>
                 </div>
               ))}
-              {Object.values(m.byCity).every((v) => !v) && <EmptyState title="Sin ingresos este mes" hint="Los cobros aparecerán aquí en cuanto se registren." />}
+              {Object.values(m.byCity).every((v) => !v) && <EmptyState title="Sin ingresos en este periodo" hint="Cambia el rango de fechas para ver otro mes." />}
             </div>
           </Card>
         </div>
+      </div>
+
+      {/* Detalle del periodo */}
+      <div>
+        <MovementsTable transactions={m.periodTx} patients={patients} periodLabel={label} />
       </div>
 
       {/* Pagos pendientes */}
@@ -292,12 +345,12 @@ export default function Finanzas() {
       <div>
         <Card tone="pine" className="relative overflow-hidden">
           <TrendingUp size={130} className="absolute -right-5 -bottom-8 opacity-[0.12]" aria-hidden="true" />
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-tertiary-fixed">Facturado este mes</p>
-          <p className="font-display text-hero font-semibold tnum mt-1.5">{formatCOP(m.monthIncome)}</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-tertiary-fixed">Facturado en el periodo</p>
+          <p className="font-display text-hero font-semibold tnum mt-1.5">{formatCOP(m.periodIncome)}</p>
           <p className="text-sm text-on-primary/75 mt-2 max-w-lg">
             {typeof m.delta === 'number'
-              ? `${m.delta >= 0 ? 'Vas' : 'Estás'} ${Math.abs(m.delta)}% ${m.delta >= 0 ? 'por encima' : 'por debajo'} del mes anterior (${formatCOP(m.lastMonthIncome)}).`
-              : 'Aún no hay mes anterior para comparar.'}
+              ? `${m.delta >= 0 ? 'Vas' : 'Estás'} ${Math.abs(m.delta)}% ${m.delta >= 0 ? 'por encima' : 'por debajo'} del periodo anterior (${formatCOP(m.prevIncome)}).`
+              : 'No hay periodo anterior con ingresos para comparar.'}
           </p>
         </Card>
       </div>
@@ -317,7 +370,7 @@ export default function Finanzas() {
       >
         <form id="new-income" onSubmit={submit} className="space-y-4 pb-2">
           <Field label="Monto (COP)" required>
-            <Input name="amount" type="number" required min="0" step="1000" inputMode="numeric" placeholder="150000" />
+            <Input name="amount" type="number" required min="0" step="1000" inputMode="numeric" placeholder="175000" />
           </Field>
           <FormGrid>
             <Field label="Categoría">

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { appointmentTypes, formatCOP } from '../../utils/format';
+import { getAppointmentTypes, formatCOP } from '../../utils/format';
+import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../Toast';
 import { userFriendlyError } from '../../lib/logger';
 import Modal from '../ui/Modal';
@@ -22,9 +23,12 @@ const LOCATIONS = [
  */
 export default function NewAppointmentModal({ open, onClose, patients, onCreate, defaultDate }) {
   const toast = useToast();
+  const { tenant } = useAuth();
   const [type, setType] = useState('primera_consulta');
   const [saving, setSaving] = useState(false);
 
+  // Tarifas del consultorio (Ajustes → Tarifas), no las constantes del código.
+  const appointmentTypes = getAppointmentTypes(tenant);
   const price = appointmentTypes.find((t) => t.value === type)?.price || 0;
 
   const submit = async (e) => {

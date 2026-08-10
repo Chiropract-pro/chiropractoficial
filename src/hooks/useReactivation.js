@@ -144,12 +144,7 @@ export function messageFor(candidate, clinicName = 'el consultorio') {
   return base[candidate.segment] || base.dormido;
 }
 
-export function whatsappLink(phone, message) {
-  const clean = String(phone || '').replace(/\D/g, '');
-  if (!clean) return null;
-  const withCode = clean.length === 10 ? `57${clean}` : clean;
-  return `https://wa.me/${withCode}?text=${encodeURIComponent(message)}`;
-}
+export { whatsappLink } from '../utils/phone';
 
 /**
  * computeCandidates — el cálculo puro, sin React.
