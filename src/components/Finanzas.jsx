@@ -15,7 +15,8 @@ import { ProgressRing, Stat, StatGrid } from './ui/Stat';
 import Modal from './ui/Modal';
 import { Field, FormGrid, Input, Select, Textarea } from './ui/Field';
 import { todayStr as today, addDaysStr, parseDateStr } from '../utils/dates';
-import PeriodPicker, { buildPeriodPresets, periodLabel } from './finanzas/PeriodPicker';
+import PeriodPicker from './finanzas/PeriodPicker';
+import { buildPeriodPresets, periodLabel } from '../utils/period';
 import MovementsTable from './finanzas/MovementsTable';
 
 const MONTHLY_GOAL = 5000000;
