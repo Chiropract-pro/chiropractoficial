@@ -12,6 +12,7 @@ import AppShell from './components/layout/AppShell';
 import Dashboard from './components/Dashboard';
 import Pacientes from './components/Pacientes';
 import Conversaciones from './components/conversaciones/Conversaciones';
+import AyudaCRM from './components/ayuda/AyudaCRM';
 import Citas from './components/Citas';
 import Jornadas from './components/Jornadas';
 import ProductosServicios from './components/ProductosServicios';
@@ -74,6 +75,7 @@ function CRMApp() {
       case 'productos': return <ProductosServicios />;
       case 'conversaciones': return <Conversaciones />;
       case 'finanzas': return <Finanzas />;
+      case 'ayuda': return <AyudaCRM />;
       case 'settings': return <Settings />;
       default: return <Dashboard onNavigate={setActiveModule} />;
     }

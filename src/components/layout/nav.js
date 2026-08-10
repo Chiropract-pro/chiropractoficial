@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Users, Calendar, Radar, Car, Package, DollarSign, Settings, MessageSquare,
+  LayoutDashboard, Users, Calendar, Radar, Car, Package, DollarSign, Settings, MessageSquare, BookOpen,
 } from 'lucide-react';
 
 /**
@@ -18,6 +18,7 @@ export const NAV_ITEMS = [
   { id: 'finanzas', label: 'Finanzas', short: 'Finanzas', icon: DollarSign, hint: 'Ingresos y cobros' },
   { id: 'jornadas', label: 'Jornadas', short: 'Jornadas', icon: Car, hint: 'Salidas por ciudad' },
   { id: 'productos', label: 'Productos', short: 'Productos', icon: Package, hint: 'Catálogo y punto de venta' },
+  { id: 'ayuda', label: 'Manual', short: 'Manual', icon: BookOpen, hint: 'Cómo usar el sistema' },
   { id: 'settings', label: 'Ajustes', short: 'Ajustes', icon: Settings, hint: 'Consultorio, equipo y plan' },
 ];
 

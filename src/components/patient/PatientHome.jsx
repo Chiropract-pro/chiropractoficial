@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  Calendar, ChevronRight, CreditCard, Edit3, ExternalLink, FileText,
+  BookOpen, Calendar, ChevronRight, CreditCard, Edit3, ExternalLink, FileText,
   Home, LogOut, MapPin, Receipt, Sparkles, Stethoscope, User, Users,
 } from 'lucide-react';
 import { usePatientAuth } from '../../contexts/PatientAuthContext';
@@ -11,6 +11,8 @@ import {
   EditProfileModal, RescheduleModal, SaleDetailModal,
 } from './PatientModals';
 import PatientClinicalHistory from './PatientClinicalHistory';
+import Ayuda from '../ayuda/Ayuda';
+import { MANUALES } from '../../lib/manual';
 
 const CLINIC_NAME = import.meta.env.VITE_CLINIC_NAME || 'chiropract.co';
 
@@ -183,11 +185,23 @@ export default function PatientHome() {
           >
             <Stethoscope size={14} /> Mi historial
           </button>
+          <button
+            onClick={() => setTab('ayuda')}
+            className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tab === 'ayuda'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <BookOpen size={14} /> Cómo usar
+          </button>
         </div>
       </div>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {tab === 'clinical' ? (
+        {tab === 'ayuda' ? (
+          <Ayuda manual={MANUALES.paciente} compacto />
+        ) : tab === 'clinical' ? (
           <PatientClinicalHistory />
         ) : (
         <>
