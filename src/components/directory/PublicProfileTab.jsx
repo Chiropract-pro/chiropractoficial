@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { isDemoMode, DEMO_PERFIL_PUBLICO } from '../../lib/demo';
 import { logger } from '../../lib/logger';
 import {
   BadgeCheck, Save, ExternalLink, Loader2, Eye, EyeOff, Stethoscope, ShieldQuestion,
@@ -18,6 +19,8 @@ function Field({ label, children, hint }) {
 const inputCls =
   'w-full px-3 py-2 rounded-lg border border-outline-variant text-sm bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary/30';
 
+const DEMO = isDemoMode();
+
 export default function PublicProfileTab() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
@@ -29,6 +32,13 @@ export default function PublicProfileTab() {
   useEffect(() => {
     let mounted = true;
     (async () => {
+      // Igual que en Equipo: en demostración no se sale a la red.
+      if (DEMO) {
+        setProfile(DEMO_PERFIL_PUBLICO);
+        setForm({ ...DEMO_PERFIL_PUBLICO });
+        setLoading(false);
+        return;
+      }
       const { data, error } = await supabase.rpc('ensure_my_practitioner_profile');
       if (!mounted) return;
       if (error) { setError(error.message); setLoading(false); return; }

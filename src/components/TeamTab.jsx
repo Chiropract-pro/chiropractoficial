@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './Toast';
 import { userFriendlyError, logger } from '../lib/logger';
+import { isDemoMode, DEMO_EQUIPO } from '../lib/demo';
 
 const ROLE_LABELS = {
   owner: { label: 'Owner', color: 'bg-primary text-on-primary' },
@@ -12,6 +13,8 @@ const ROLE_LABELS = {
   assistant: { label: 'Asistente', color: 'bg-[#f6e7db] text-[#a85b32]' },
   receptionist: { label: 'Recepcionista', color: 'bg-purple-100 text-purple-700' },
 };
+
+const DEMO = isDemoMode();
 
 export default function TeamTab() {
   const { tenant, membership, profile } = useAuth();
@@ -29,6 +32,10 @@ export default function TeamTab() {
   const isOwnerOrAdmin = membership?.role === 'owner' || membership?.role === 'admin';
 
   const load = async () => {
+    // En demostración se enseña un equipo de ejemplo: consultar con el tenant
+    // de ejemplo devuelve 400 y deja un error rojo en la consola justo cuando
+    // se está mostrando el sistema a alguien.
+    if (DEMO) { setMembers(DEMO_EQUIPO); setInvitations([]); setLoading(false); return; }
     if (!tenant?.id) return;
     setLoading(true);
     try {

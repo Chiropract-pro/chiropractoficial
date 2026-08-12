@@ -280,3 +280,31 @@ export const DEMO_PLANS = [
   { id: 'basic', name: 'Basic', tagline: 'Para empezar', price_cop_monthly: 199000, max_patients: 300, max_users: 3, is_public: true, display_order: 1 },
   { id: 'pro', name: 'Pro', tagline: 'Para consultorios en crecimiento', price_cop_monthly: 399000, max_patients: 1000, max_users: 10, is_public: true, display_order: 2 },
 ];
+
+
+// ── Equipo y perfil público de la demostración ──────────────────────────────
+export const DEMO_EQUIPO = [
+  {
+    id: 'mem-1', user_id: 'u-1', role: 'owner',
+    accepted_at: new Date(Date.now() - 90 * 86400000).toISOString(),
+    profiles: { id: 'u-1', full_name: 'Dr. Miguel Ángel Díaz', phone: '310 000 0000', avatar_url: null },
+  },
+  {
+    id: 'mem-2', user_id: 'u-2', role: 'receptionist',
+    accepted_at: new Date(Date.now() - 40 * 86400000).toISOString(),
+    profiles: { id: 'u-2', full_name: 'Laura Restrepo', phone: '311 000 0000', avatar_url: null },
+  },
+];
+
+export const DEMO_PERFIL_PUBLICO = {
+  id: 'perfil-demo',
+  title: 'Dr.',
+  full_name: 'Miguel Ángel Díaz',
+  headline: 'Quiropráctico · Salud espinal de precisión',
+  bio: 'Atención quiropráctica en Bogotá y jornadas en municipios. Enfoque en dolor lumbar, cervical y recuperación postural.',
+  city: 'Bogotá',
+  slug: 'demo',
+  is_public: true,
+  verified: true,
+  photo_url: null,
+};
