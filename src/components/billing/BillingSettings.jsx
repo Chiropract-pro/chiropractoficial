@@ -16,6 +16,59 @@ const ID_TYPES = [
   { value: 'PEP', label: 'Permiso Especial de Permanencia' },
 ];
 
+
+/**
+ * Proveedores de facturación electrónica.
+ *
+ * `conectado` dice la verdad: solo Alegra tiene conector probado de punta a
+ * punta (probar credenciales y emitir). Con los demás se puede dejar la
+ * configuración guardada, pero la emisión todavía no sale de aquí, y la
+ * pantalla lo dice en vez de aparentar que funciona.
+ */
+const PROVEEDORES = {
+  alegra: {
+    nombre: 'Alegra',
+    sitio: 'https://www.alegra.com',
+    conectado: true,
+    resumen: 'El más usado por consultorios pequeños en Colombia.',
+    campoUsuario: 'Email de tu cuenta Alegra',
+    campoToken: 'Token de Alegra',
+    dondeSacarlo: 'En Alegra → Configuración → API → Token de Alegra, copia tu email y token.',
+  },
+  qount: {
+    nombre: 'qount',
+    sitio: 'https://qount.co',
+    conectado: false,
+    resumen: 'El servicio contable de Invent Agency: contabilidad y DIAN en el mismo lugar.',
+    campoUsuario: 'Correo de tu cuenta qount',
+    campoToken: 'Llave de API de qount',
+    dondeSacarlo: 'En qount → Ajustes → Integraciones, genera una llave de API.',
+  },
+  siigo: {
+    nombre: 'Siigo',
+    sitio: 'https://www.siigo.com',
+    conectado: false,
+    resumen: 'Para consultorios que ya llevan su contabilidad en Siigo.',
+    campoUsuario: 'Usuario de Siigo',
+    campoToken: 'Access key de Siigo',
+    dondeSacarlo: 'En Siigo → Configuración → API, genera tu access key.',
+  },
+  factus: {
+    nombre: 'Factus',
+    sitio: 'https://factus.com.co',
+    conectado: false,
+    resumen: 'Proveedor tecnológico autorizado, enfocado en emisión.',
+    campoUsuario: 'Correo de tu cuenta Factus',
+    campoToken: 'Token de Factus',
+    dondeSacarlo: 'En Factus → Perfil → Credenciales de API.',
+  },
+  manual: {
+    nombre: 'Sin facturación electrónica',
+    conectado: true,
+    resumen: 'Las ventas y los recibos se registran igual; simplemente no se emite factura a la DIAN.',
+  },
+};
+
 const EMPTY = {
   provider: 'alegra',
   api_email: '',
@@ -53,6 +106,9 @@ export default function BillingSettings() {
 
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  const prov = PROVEEDORES[form.provider] || PROVEEDORES.alegra;
+  const sinFacturacion = form.provider === 'manual';
+
   const handleSave = async (e) => {
     e?.preventDefault();
     setSaving(true);
@@ -81,7 +137,7 @@ export default function BillingSettings() {
 
       const res = await testConnection(overrides);
       setTestResult(res);
-      if (res.ok) toast.success(`Conectado a Alegra: ${res.account_name || ''}`);
+      if (res.ok) toast.success(`Conectado a ${prov.nombre}: ${res.account_name || ''}`);
     } catch (e) {
       setTestResult({ ok: false, error: e.message });
       toast.error(userFriendlyError(e));
@@ -107,7 +163,7 @@ export default function BillingSettings() {
         <div>
           <h3 className="text-lg font-bold text-on-surface">Facturación electrónica DIAN</h3>
           <p className="text-sm text-on-surface-variant">
-            Conecta tu cuenta de Alegra para emitir facturas electrónicas.
+            Elige tu proveedor y conecta la cuenta con la que emites a la DIAN.
           </p>
         </div>
       </div>
@@ -149,37 +205,83 @@ export default function BillingSettings() {
         </div>
       )}
 
-      {/* Help banner */}
-      <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-sm text-on-surface space-y-2">
-        <p className="font-semibold flex items-center gap-1.5">
-          <Shield size={14} className="text-primary" /> Antes de empezar
-        </p>
-        <ol className="list-decimal pl-5 space-y-1 text-xs text-on-surface-variant">
-          <li>
-            Crea una cuenta en{' '}
-            <a href="https://www.alegra.com" target="_blank" rel="noopener noreferrer" className="text-primary font-medium inline-flex items-center gap-0.5">
-              Alegra <ExternalLink size={10} />
-            </a>{' '}y activa <b>facturación electrónica</b> con DIAN (proceso una vez).
-          </li>
-          <li>En Alegra → <b>Configuración → API → Token de Alegra</b>, copia tu email y token.</li>
-          <li>Pega los datos abajo, prueba conexión y selecciona la numeración DIAN.</li>
-        </ol>
+      {/* Proveedor */}
+      <div>
+        <h4 className="text-sm font-bold text-on-surface mb-3">¿Con quién facturas?</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {Object.entries(PROVEEDORES).map(([clave, p]) => (
+            <button
+              key={clave}
+              type="button"
+              onClick={() => update('provider', clave)}
+              className={`text-left rounded-xl border p-3.5 transition-colors ${
+                form.provider === clave
+                  ? 'border-primary bg-primary/5'
+                  : 'border-outline-variant hover:bg-surface-container-low'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <span className="font-semibold text-on-surface text-sm">{p.nombre}</span>
+                {!p.conectado && (
+                  <span className="text-[9.5px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant">
+                    Conector en camino
+                  </span>
+                )}
+              </span>
+              <span className="block text-[11.5px] text-on-surface-variant mt-1 leading-snug">{p.resumen}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* Ayuda del proveedor elegido */}
+      {!sinFacturacion && (
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 text-sm text-on-surface space-y-2">
+          <p className="font-semibold flex items-center gap-1.5">
+            <Shield size={14} className="text-primary" /> Antes de empezar con {prov.nombre}
+          </p>
+          <ol className="list-decimal pl-5 space-y-1 text-xs text-on-surface-variant">
+            <li>
+              Ten una cuenta en{' '}
+              <a href={prov.sitio} target="_blank" rel="noopener noreferrer" className="text-primary font-medium inline-flex items-center gap-0.5">
+                {prov.nombre} <ExternalLink size={10} />
+              </a>{' '}con <b>facturación electrónica</b> activada ante la DIAN (se hace una sola vez).
+            </li>
+            <li>{prov.dondeSacarlo}</li>
+            <li>Pega los datos abajo, prueba la conexión y elige la numeración DIAN.</li>
+          </ol>
+          {!prov.conectado && (
+            <p className="flex items-start gap-2 text-[11.5px] text-[#a85b32] bg-[#f6e7db]/70 border border-warning/30 rounded-lg px-3 py-2 mt-1">
+              <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
+              Puedes dejar la configuración de {prov.nombre} guardada, pero la emisión automática
+              todavía no sale desde aquí — hoy solo está conectada con Alegra. Mientras tanto las
+              ventas se registran igual y la factura se emite desde {prov.nombre}.
+            </p>
+          )}
+        </div>
+      )}
+
+      {sinFacturacion && (
+        <p className="bg-surface-container-low border border-outline-variant rounded-xl p-4 text-[13px] text-on-surface-variant leading-relaxed">
+          Sin facturación electrónica el sistema funciona completo: se cobra, se registra la venta
+          y el paciente recibe su recibo. Lo único que no ocurre es la emisión a la DIAN.
+        </p>
+      )}
+
       <form onSubmit={handleSave} className="space-y-5">
-        {/* Credenciales Alegra */}
-        <div>
-          <h4 className="text-sm font-bold text-on-surface mb-3">Credenciales Alegra</h4>
+        {/* Credenciales del proveedor */}
+        <div className={sinFacturacion ? 'hidden' : ''}>
+          <h4 className="text-sm font-bold text-on-surface mb-3">Credenciales de {prov.nombre}</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
-              label="Email de tu cuenta Alegra"
+              label={prov.campoUsuario}
               type="email"
               value={form.api_email}
               onChange={(v) => update('api_email', v)}
               placeholder="cuenta@chiropract.co"
             />
             <Input
-              label="Token de Alegra"
+              label={prov.campoToken}
               type={showToken ? 'text' : 'password'}
               value={form.api_token}
               onChange={(v) => update('api_token', v)}
@@ -197,7 +299,8 @@ export default function BillingSettings() {
             <button
               type="button"
               onClick={handleTest}
-              disabled={testing || (!form.api_email && !config?.api_email)}
+              disabled={testing || !prov.conectado || (!form.api_email && !config?.api_email)}
+              title={prov.conectado ? undefined : `Todavía no hay conector para ${prov.nombre}`}
               className="flex items-center gap-1.5 text-sm bg-surface-container-low hover:bg-surface-container border border-outline-variant text-on-surface px-4 py-2 rounded-lg font-medium disabled:opacity-50"
             >
               {testing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
@@ -215,7 +318,7 @@ export default function BillingSettings() {
               {testResult.ok ? (
                 <>
                   <p className="font-semibold flex items-center gap-1">
-                    <CheckCircle size={14} /> Conectado: {testResult.account_name || 'Cuenta Alegra'}
+                    <CheckCircle size={14} /> Conectado: {testResult.account_name || `Cuenta ${prov.nombre}`}
                   </p>
                   {testResult.numerations?.length > 0 && (
                     <div className="mt-2">
@@ -293,7 +396,7 @@ export default function BillingSettings() {
         </div>
 
         {/* Numeración DIAN + modo */}
-        <div>
+        <div className={sinFacturacion ? 'hidden' : ''}>
           <h4 className="text-sm font-bold text-on-surface mb-3">Configuración DIAN</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input
