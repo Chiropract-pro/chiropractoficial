@@ -293,6 +293,34 @@ export const DEMO_WA_MESSAGES = {
 };
 
 /** Suscripción de ejemplo: en demostración la pestaña Plan enseña un Pro activo. */
+// ── Resultados de la reactivación automática ────────────────────────────────
+// Lo que devolvería `reactivation_report`: a quién le escribió el bot y qué
+// pasó después. Los desenlaces se calculan en la base cruzando el contacto con
+// mensajes y citas; aquí van fijos porque es una demostración.
+export const DEMO_REACTIVACION = [
+  { touch_id: 'rt-1', patient_id: 'demo-p6', full_name: NAMES[6], phone: '573162324074',
+    segment: 'dormido', estimated_value: 165000, sent_at: hace(120), replied_at: hace(95),
+    booked_at: hace(90), appointment_date: day(3), outcome: 'volvio' },
+  { touch_id: 'rt-2', patient_id: 'demo-p12', full_name: NAMES[12], phone: '573122654148',
+    segment: 'primera', estimated_value: 165000, sent_at: hace(240), replied_at: hace(230),
+    booked_at: hace(228), appointment_date: day(4), outcome: 'volvio' },
+  { touch_id: 'rt-3', patient_id: 'demo-p18', full_name: NAMES[18], phone: '573182974222',
+    segment: 'dormido', estimated_value: 165000, sent_at: hace(400), replied_at: hace(380),
+    booked_at: null, appointment_date: null, outcome: 'respondio' },
+  { touch_id: 'rt-4', patient_id: 'demo-p9', full_name: NAMES[9], phone: '573192484111',
+    segment: 'primera', estimated_value: 165000, sent_at: hace(1500), replied_at: hace(1440),
+    booked_at: null, appointment_date: null, outcome: 'respondio' },
+  { touch_id: 'rt-5', patient_id: 'demo-p14', full_name: NAMES[14], phone: '573142764172',
+    segment: 'dormido', estimated_value: 165000, sent_at: hace(2900), replied_at: null,
+    booked_at: null, appointment_date: null, outcome: 'sin_respuesta' },
+  { touch_id: 'rt-6', patient_id: 'demo-p21', full_name: NAMES[21], phone: '573113144259',
+    segment: 'primera', estimated_value: 165000, sent_at: hace(4300), replied_at: null,
+    booked_at: null, appointment_date: null, outcome: 'sin_respuesta' },
+  { touch_id: 'rt-7', patient_id: 'demo-p3', full_name: NAMES[3], phone: '573001112233',
+    segment: 'abandono', estimated_value: 165000, sent_at: hace(5800), replied_at: null,
+    booked_at: null, appointment_date: null, outcome: 'sin_respuesta' },
+];
+
 export const DEMO_SUBSCRIPTION = {
   tenant_id: 'demo-tenant',
   plan_id: 'pro',

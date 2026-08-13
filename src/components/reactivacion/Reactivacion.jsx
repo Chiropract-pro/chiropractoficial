@@ -6,6 +6,7 @@ import { formatCOP } from '../../utils/format';
 import { downloadCsv } from '../../utils/csv';
 import { Card, EmptyState, PageHeader, SectionHeader } from '../ui/Card';
 import { SegmentedTabs } from '../ui/Tabs';
+import Resultados from './Resultados';
 import Button from '../ui/Button';
 import LoadingState from '../LoadingState';
 import CandidateCard from './CandidateCard';
@@ -25,6 +26,9 @@ export default function Reactivacion() {
   const { candidates, summary, loading, registerTouch, persisted } = useReactivation();
   const [segment, setSegment] = useState('todos');
   const [limit, setLimit] = useState(PAGE);
+  // Dos preguntas distintas: a quién hay que buscar, y a quién ya buscó el bot.
+  // Mezclarlas en una sola lista hacía imposible saber si la campaña servía.
+  const [vista, setVista] = useState('pendientes');
 
   const clinicName = tenant?.name || 'el consultorio';
 
@@ -43,6 +47,11 @@ export default function Reactivacion() {
     ...SEGMENT_LIST.map((s) => ({ id: s.id, label: s.short, count: summary.counts[s.id] || 0 })),
   ];
   const activeSeg = SEGMENT_LIST.find((s) => s.id === segment);
+
+  const vistas = [
+    { id: 'pendientes', label: 'A quién escribirle', count: candidates.length },
+    { id: 'resultados', label: 'Lo que hizo el bot' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -81,6 +90,17 @@ export default function Reactivacion() {
         </PageHeader>
       </div>
 
+      <SegmentedTabs
+        tabs={vistas}
+        value={vista}
+        onChange={setVista}
+        layoutId="reactivacion-vista"
+      />
+
+      {vista === 'resultados' && <Resultados />}
+
+      {vista === 'pendientes' && (
+      <>
       {/* Titular: el dinero dormido */}
       <div>
         <Card tone="pine" pad={false} className="overflow-hidden">
@@ -207,6 +227,8 @@ export default function Reactivacion() {
           Los contactos se están guardando solo en este dispositivo. Para compartirlos con el
           equipo hay que aplicar la migración <code className="font-mono">037_reactivation.sql</code>.
         </p>
+      )}
+      </>
       )}
     </div>
   );
