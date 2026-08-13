@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CornerDownLeft, Search, User } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { NAV_ITEMS } from './nav';
+import { navParaRol } from './nav';
+import { useAuth } from '../../contexts/AuthContext';
 import { usePatients } from '../../hooks/useTenantData';
 
 /**
@@ -27,6 +28,7 @@ export default function CommandPalette({ open, onClose, onNavigate, onOpenPatien
 }
 
 function Palette({ onClose, onNavigate, onOpenPatient }) {
+  const { membership } = useAuth();
   const [query, setQuery] = useState('');
   const [cursor, setCursor] = useState(0);
   const inputRef = useRef(null);
@@ -45,7 +47,7 @@ function Palette({ onClose, onNavigate, onOpenPatient }) {
   const q = query.trim().toLowerCase();
 
   const results = useMemo(() => {
-    const navHits = NAV_ITEMS
+    const navHits = navParaRol(membership?.role)
       .filter((i) => !q || i.label.toLowerCase().includes(q) || i.hint?.toLowerCase().includes(q))
       .map((i) => ({ kind: 'nav', id: i.id, label: i.label, hint: i.hint, icon: i.icon }));
 
@@ -67,7 +69,7 @@ function Palette({ onClose, onNavigate, onOpenPatient }) {
         }));
 
     return [...patientHits, ...navHits];
-  }, [q, patients]);
+  }, [q, patients, membership?.role]);
 
   // El cursor se acota en render en vez de reiniciarse desde un efecto.
   const active = Math.min(cursor, Math.max(results.length - 1, 0));

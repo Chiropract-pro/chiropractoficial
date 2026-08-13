@@ -14,19 +14,27 @@ import { Field, FormGrid, Input } from './ui/Field';
 import Button from './ui/Button';
 
 
+// `soloDueno` marca lo que solo debe ver quien manda en el consultorio:
+// tarifas, equipo, facturación y plan. Sin esto, la recepcionista podía subir
+// el precio de la consulta, invitar usuarios o cancelar la suscripción — no
+// por mala fe, sino porque estaba ahí y se puede tocar sin querer.
+// «Mi perfil» lo ve todo el mundo: es donde cada uno cambia su contraseña.
 const TABS = [
-  { id: 'clinic', label: 'Consultorio', icon: Building2 },
-  { id: 'pricing', label: 'Tarifas', icon: Tag },
-  { id: 'directory', label: 'Perfil público', icon: Globe },
-  { id: 'team', label: 'Equipo', icon: Users },
-  { id: 'billing', label: 'Facturación DIAN', icon: FileText },
+  { id: 'clinic', label: 'Consultorio', icon: Building2, soloDueno: true },
+  { id: 'pricing', label: 'Tarifas', icon: Tag, soloDueno: true },
+  { id: 'directory', label: 'Perfil público', icon: Globe, soloDueno: true },
+  { id: 'team', label: 'Equipo', icon: Users, soloDueno: true },
+  { id: 'billing', label: 'Facturación DIAN', icon: FileText, soloDueno: true },
   { id: 'profile', label: 'Mi perfil', icon: User },
-  { id: 'plan', label: 'Plan', icon: CreditCard },
+  { id: 'plan', label: 'Plan', icon: CreditCard, soloDueno: true },
 ];
 
 export default function Settings() {
-  const { tenant, updateTenant } = useAuth();
-  const [activeTab, setActiveTab] = useState('clinic');
+  const { tenant, updateTenant, membership } = useAuth();
+  // Ante la duda —rol desconocido o sesión a medio cargar— el más restringido.
+  const manda = ['owner', 'admin'].includes(membership?.role);
+  const visibles = TABS.filter((t) => !t.soloDueno || manda);
+  const [activeTab, setActiveTab] = useState(() => (manda ? 'clinic' : 'profile'));
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -87,11 +95,11 @@ export default function Settings() {
       )}
 
       <div>
-        <UnderlineTabs tabs={TABS} value={activeTab} onChange={setActiveTab} />
+        <UnderlineTabs tabs={visibles} value={activeTab} onChange={setActiveTab} />
       </div>
 
       <div>
-        {activeTab === 'clinic' && (
+        {manda && activeTab === 'clinic' && (
           <Card className="max-w-3xl">
             <SectionHeader icon={Building2} title="Información del consultorio" hint="Aparece en recibos, correos y el perfil público" />
             <form onSubmit={handleSaveClinic} className="space-y-4">
@@ -122,12 +130,12 @@ export default function Settings() {
           </Card>
         )}
 
-        {activeTab === 'pricing' && <PricingTab />}
-        {activeTab === 'directory' && <PublicProfileTab />}
-        {activeTab === 'team' && <TeamTab />}
-        {activeTab === 'billing' && <BillingSettings />}
+        {manda && activeTab === 'pricing' && <PricingTab />}
+        {manda && activeTab === 'directory' && <PublicProfileTab />}
+        {manda && activeTab === 'team' && <TeamTab />}
+        {manda && activeTab === 'billing' && <BillingSettings />}
         {activeTab === 'profile' && <PerfilTab />}
-        {activeTab === 'plan' && <PlanTab />}
+        {manda && activeTab === 'plan' && <PlanTab />}
       </div>
     </div>
   );

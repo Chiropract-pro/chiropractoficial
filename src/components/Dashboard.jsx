@@ -18,7 +18,10 @@ import { todayStr as today, addDaysStr, localTimeStr, parseDateStr } from '../ut
 const MONTHLY_GOAL = 5000000;
 
 export default function Dashboard({ onNavigate }) {
-  const { profile } = useAuth();
+  const { profile, membership } = useAuth();
+  // Mismo criterio que el menú (`navParaRol`): si no puede entrar a Finanzas,
+  // tampoco se le muestran cifras acumuladas aquí.
+  const veFinanzas = ['owner', 'admin', 'doctor'].includes(membership?.role);
   const { patients, loading: lP } = usePatients();
   const { appointments, loading: lA } = useAppointments();
   const { jornadas, loading: lJ } = useJornadas();
@@ -115,10 +118,15 @@ export default function Dashboard({ onNavigate }) {
             sub={pendingToday.length > 0 ? `${pendingToday.length} por confirmar` : 'todas confirmadas'}
             series={apptSeries} onClick={() => onNavigate('citas')}
           />
+          {/* Recepción ve lo del día —necesita saber si cuadró la caja— pero no
+              el acumulado del mes ni el atajo a Finanzas: esa pantalla no está
+              en su menú, y dejar la cifra aquí sería esconder la puerta y
+              dejar la ventana abierta. */}
           <Stat
             label="Ingresos del día" icon={DollarSign} value={formatCOP(todayIncome)}
-            sub={`Mes: ${formatCOP(monthIncome)}`} series={incomeSeries}
-            onClick={() => onNavigate('finanzas')}
+            sub={veFinanzas ? `Mes: ${formatCOP(monthIncome)}` : 'lo cobrado hoy'}
+            series={incomeSeries}
+            onClick={veFinanzas ? () => onNavigate('finanzas') : undefined}
           />
           <Stat
             label="Pacientes activos" icon={Activity} value={String(activePatients.length)}

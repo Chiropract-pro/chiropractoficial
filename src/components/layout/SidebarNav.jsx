@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { ChevronsLeft, ChevronsRight, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { cn } from '../../lib/utils';
-import { NAV_ITEMS } from './nav';
+import { navParaRol } from './nav';
 
 /**
  * SidebarNav — la navegación de escritorio y del cajón móvil.
@@ -16,7 +16,7 @@ import { NAV_ITEMS } from './nav';
  * literalmente la columna de la navegación, y la vértebra activa se ilumina.
  */
 export default function SidebarNav({ activeModule, onNavigate, collapsed = false, onToggleCollapse, alertCount = 0 }) {
-  const { tenant, profile, signOut } = useAuth();
+  const { tenant, profile, signOut, membership } = useAuth();
   const initials = (profile?.full_name || 'U')
     .replace(/^(dr|dra)\.?\s+/i, '')
     .split(' ')
@@ -59,7 +59,7 @@ export default function SidebarNav({ activeModule, onNavigate, collapsed = false
           )}
         />
         <ul className="space-y-0.5 relative">
-          {NAV_ITEMS.map((item) => {
+          {navParaRol(membership?.role).map((item) => {
             const Icon = item.icon;
             const active = activeModule === item.id;
             return (

@@ -17,7 +17,7 @@ const FILTROS = [
   { id: 'todas', label: 'Todas' },
   { id: 'sin_leer', label: 'Sin leer' },
   { id: 'abiertas', label: 'Ventana abierta' },
-  { id: 'campana', label: 'De campaña' },
+  { id: 'campana', label: 'De reactivación' },
   { id: 'humano', label: 'Requieren humano' },
 ];
 
@@ -183,7 +183,10 @@ export default function Conversaciones() {
                           )}
                           {c.last_campaign && (
                             <span className="flex items-center gap-1 text-[9.5px] font-medium px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant">
-                              <Megaphone size={9} /> Campaña
+                              {/* Se nombra la campaña, no «campaña» a secas: saber que
+                                  esta conversación nació de una reactivación cambia
+                                  cómo se contesta. */}
+                              <Megaphone size={9} /> {c.last_campaign === 'reactivacion' ? 'Reactivación' : 'Campaña'}
                             </span>
                           )}
                         </span>

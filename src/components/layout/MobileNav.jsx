@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { MoreHorizontal } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { NAV_ITEMS } from './nav';
+import { navParaRol } from './nav';
+import { useAuth } from '../../contexts/AuthContext';
 
 /**
  * MobileNav — barra inferior nativa para el teléfono.
@@ -13,7 +14,8 @@ import { NAV_ITEMS } from './nav';
  * un toque, en la zona del pulgar, y el resto vive tras "Más".
  */
 export default function MobileNav({ activeModule, onNavigate, onOpenDrawer }) {
-  const primary = NAV_ITEMS.filter((i) => i.primary);
+  const { membership } = useAuth();
+  const primary = navParaRol(membership?.role).filter((i) => i.primary);
   const inMore = !primary.some((i) => i.id === activeModule);
 
   return (
