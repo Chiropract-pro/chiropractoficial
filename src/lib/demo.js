@@ -365,5 +365,9 @@ export const DEMO_PERFIL_PUBLICO = {
   slug: 'demo',
   is_public: true,
   verified: true,
-  photo_url: null,
+  // Cadena vacía, no null: el formulario del perfil público esparce este objeto
+  // tal cual, y un `value={null}` vuelve el campo NO CONTROLADO — React avisa y
+  // lo que se escriba puede perderse. Vacío se comporta igual («sin foto») sin
+  // romper el control.
+  photo_url: '',
 };
