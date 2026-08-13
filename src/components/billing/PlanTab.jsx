@@ -110,6 +110,11 @@ export default function PlanTab() {
 
   const Icon = PLAN_ICONS[subscription.plan_id] || Sparkles;
   const days = Math.floor(subscription.days_remaining || 0);
+  // Licencia propia: el consultorio compró el sistema. No hay mensualidad,
+  // no hay fecha de renovación y no hay nada que cancelar. Se reconoce por
+  // no tener fin de periodo, no por el nombre del plan, para que sirva
+  // igual con cualquier otra licencia perpetua que se venda después.
+  const perpetua = subscription.current_period_end == null;
 
   return (
     <div className="space-y-6">
@@ -138,7 +143,13 @@ export default function PlanTab() {
               {days <= 5 && <span className="text-[#a85b32] font-semibold"> Activa un plan para no perder acceso.</span>}
             </p>
           )}
-          {subscription.status === 'active' && !subscription.cancel_at_period_end && (
+          {perpetua && (
+            <p>
+              <b>Sin renovación ni mensualidad.</b> El sistema es del consultorio: no vence
+              y no hay que pagar nada para seguir usándolo.
+            </p>
+          )}
+          {!perpetua && subscription.status === 'active' && !subscription.cancel_at_period_end && (
             <p>
               Próxima renovación: <b>{new Date(subscription.current_period_end).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</b>
               {' '}({days} días restantes)
@@ -172,12 +183,12 @@ export default function PlanTab() {
           <LimitCard
             icon={CreditCard}
             label={billingCycle === 'yearly' ? 'Anual' : 'Mensual'}
-            value={subscription.plan_id === 'trial' ? 'Gratis' : `$${formatCOP(subscription.price_cop_monthly)}`}
+            value={perpetua ? 'Sin cuota' : subscription.plan_id === 'trial' ? 'Gratis' : `$${formatCOP(subscription.price_cop_monthly)}`}
           />
         </div>
 
         {/* Cancel option */}
-        {subscription.status === 'active' && !subscription.cancel_at_period_end && isOwner && (
+        {!perpetua && subscription.status === 'active' && !subscription.cancel_at_period_end && isOwner && (
           <div className="mt-4 text-right">
             {!confirmCancel ? (
               <button
@@ -302,7 +313,7 @@ function LimitCard({ icon: Icon, label, max, value }) {
       <Icon size={14} className="mx-auto text-primary mb-1" />
       <p className="text-[10px] uppercase tracking-wide text-on-surface-variant font-semibold">{label}</p>
       <p className="text-base font-bold text-on-surface">
-        {value !== undefined ? value : (max === null || max === undefined ? '∞' : max)}
+        {value !== undefined ? value : (max === null || max === undefined ? 'Sin tope' : max)}
       </p>
     </div>
   );
