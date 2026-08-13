@@ -66,6 +66,21 @@ export default function TeamTab() {
     e.preventDefault();
     const email = inviteEmail.trim().toLowerCase();
     if (!email) return;
+
+    // En demostración la invitación se simula. Antes esta función seguía de
+    // largo y llamaba al RPC con `demo-tenant`, que no es un UUID: fallaba, y
+    // parecía que el sistema no sabía invitar a nadie.
+    if (DEMO) {
+      setInvitations((prev) => [
+        { id: `demo-inv-${prev.length + 1}`, email, role: inviteRole, created_at: new Date().toISOString() },
+        ...prev,
+      ]);
+      toast.success(`Invitación para ${email} — en demostración no sale ningún correo.`);
+      setInviteEmail('');
+      setInviteRole('doctor');
+      return;
+    }
+
     setInviting(true);
     try {
       const { error } = await supabase.rpc('invite_member', {
