@@ -13,6 +13,7 @@ import Dashboard from './components/Dashboard';
 import Pacientes from './components/Pacientes';
 import Conversaciones from './components/conversaciones/Conversaciones';
 import AyudaCRM from './components/ayuda/AyudaCRM';
+import ManualPublico from './components/ayuda/ManualPublico';
 import Citas from './components/Citas';
 import Jornadas from './components/Jornadas';
 import ProductosServicios from './components/ProductosServicios';
@@ -133,8 +134,7 @@ function LandingApp() {
   );
 }
 
-function getViewFromHash() {
-  const h = window.location.hash;
+function getViewFromHash(h = window.location.hash) {
   // El flujo de recuperación manda SIEMPRE: supabase-js limpia el hash al detectar
   // la sesión, así que sin esta marca el usuario caía dentro de la app ya logueado
   // y nunca podía fijar su contraseña.
@@ -147,28 +147,38 @@ function getViewFromHash() {
   if (h === '#directorio' || h === '#medicos') return 'directory';
   if (h === '#comunidad' || h === '#red' || h === '#feed') return 'feed';
   if (h.startsWith('#dr/')) return 'practitioner';
+  if (h === '#manual' || h.startsWith('#manual/')) return 'manual';
   return 'landing';
 }
 
+// clave del manual desde el hash: #manual/paciente → 'paciente'; #manual → null
+function getManualFromHash(h) {
+  return h.startsWith('#manual/') ? h.slice(8) : null;
+}
+
 // slug del médico desde el hash: #dr/miguel-diaz → 'miguel-diaz'
-function getSlugFromHash() {
-  const h = window.location.hash;
+function getSlugFromHash(h) {
   return h.startsWith('#dr/') ? h.slice(4) : null;
 }
 
 function AppRouter() {
   const { user, tenant, profile, loading, tenantLoading } = useAuth();
-  const [view, setView] = useState(getViewFromHash);
+  // Se guarda el hash entero, no solo el nombre de la vista. Con el nombre
+  // solo, moverse entre dos rutas de la MISMA vista —#manual → #manual/admin,
+  // o de un médico a otro— no cambiaba el estado y la pantalla se quedaba
+  // congelada en la anterior.
+  const [hash, setHash] = useState(() => window.location.hash);
+  const view = getViewFromHash(hash);
 
   useEffect(() => {
-    const onHash = () => setView(getViewFromHash());
+    const onHash = () => setHash(window.location.hash);
     window.addEventListener('hashchange', onHash);
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
   const goToLanding = () => {
     window.location.hash = '';
-    setView('landing');
+    setHash('');
   };
 
   // Los cortes de ruta van DESPUÉS de los hooks: un `return` antes del
@@ -219,12 +229,24 @@ function AppRouter() {
   if (view === 'practitioner') {
     return (
       <PractitionerProfilePage
-        slug={getSlugFromHash()}
+        slug={getSlugFromHash(hash)}
         onBack={() => { window.location.hash = '#directorio'; }}
       />
     );
   }
   if (view === 'feed') return <FeedPage onBack={goToLanding} />;
+
+  // Manuales — públicos por link. El del administrador se sirve solo dentro
+  // del CRM; ManualPublico lo rechaza aunque se escriba la dirección a mano.
+  if (view === 'manual') {
+    return (
+      <ManualPublico
+        clave={getManualFromHash(hash)}
+        onAbrir={(clave) => { window.location.hash = `#manual/${clave}`; }}
+        onVolver={getManualFromHash(hash) ? () => { window.location.hash = '#manual'; } : undefined}
+      />
+    );
+  }
 
   // Auth flow
   if (!user) {

@@ -243,18 +243,30 @@ const SOLO_ADMIN = [
 
 export const MANUALES = {
   paciente: {
+    clave: 'paciente',
     titulo: 'Manual del paciente',
     subtitulo: 'Cómo usar su portal',
+    // Para quién es, en la tarjeta de la biblioteca.
+    audiencia: 'Para quien se atiende en el consultorio',
+    publico: true,
     secciones: PACIENTE,
   },
   equipo: {
+    clave: 'equipo',
     titulo: 'Manual del equipo',
     subtitulo: 'El día a día del consultorio',
+    audiencia: 'Para recepción, asistentes y profesionales',
+    publico: true,
     secciones: EQUIPO,
   },
   admin: {
+    clave: 'admin',
     titulo: 'Manual del administrador',
     subtitulo: 'Todo lo del equipo, más la configuración',
+    audiencia: 'Para el dueño del consultorio',
+    // El único que NO se publica: explica tarifas, facturación, plan y cómo
+    // dar de alta usuarios. Nada de eso tiene por qué estar en internet.
+    publico: false,
     secciones: [...EQUIPO, ...SOLO_ADMIN],
   },
 };
@@ -262,4 +274,16 @@ export const MANUALES = {
 /** Qué manual le toca a un rol. Ante la duda, el más restringido. */
 export function manualPara(rol) {
   return MANUALES[ROL_A_MANUAL[rol] || 'equipo'];
+}
+
+/** Los que se pueden compartir por link. El del administrador nunca. */
+export const MANUALES_PUBLICOS = Object.values(MANUALES).filter((m) => m.publico);
+
+/** Qué manuales puede ver alguien con este rol dentro del sistema. */
+export function bibliotecaPara(rol) {
+  const suyo = ROL_A_MANUAL[rol] || 'equipo';
+  // El administrador ve los tres: necesita saber qué le llega al paciente y
+  // qué ve su equipo para poder explicarlo.
+  if (suyo === 'admin') return [MANUALES.admin, MANUALES.equipo, MANUALES.paciente];
+  return [MANUALES.equipo, MANUALES.paciente];
 }
