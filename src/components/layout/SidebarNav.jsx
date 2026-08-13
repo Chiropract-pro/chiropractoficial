@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { ChevronsLeft, ChevronsRight, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSubscription } from '../../hooks/useSubscription';
 import { cn } from '../../lib/utils';
 import { navParaRol } from './nav';
 
@@ -17,6 +18,12 @@ import { navParaRol } from './nav';
  */
 export default function SidebarNav({ activeModule, onNavigate, collapsed = false, onToggleCollapse, alertCount = 0 }) {
   const { tenant, profile, signOut, membership } = useAuth();
+  // El nombre del plan sale de la suscripción, no de la copia en `tenants.plan`.
+  // Esa copia se desincronizó: la insignia decía «Plan pro» mientras Ajustes
+  // mostraba «Licencia propia». Un dato duplicado siempre termina mintiendo por
+  // un lado; aquí se usa el mismo origen que la pantalla de Plan.
+  const { subscription } = useSubscription();
+  const nombrePlan = subscription?.plan_name || tenant?.plan;
   const initials = (profile?.full_name || 'U')
     .replace(/^(dr|dra)\.?\s+/i, '')
     .split(' ')
@@ -41,11 +48,11 @@ export default function SidebarNav({ activeModule, onNavigate, collapsed = false
         )}
       </div>
 
-      {!collapsed && tenant?.plan && (
+      {!collapsed && nombrePlan && (
         <div className="px-5 pb-4 flex-shrink-0">
           <span className="inline-flex items-center gap-1.5 text-[10px] bg-white/10 text-tertiary-fixed px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
             <span className="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim" />
-            Plan {tenant.plan}
+            Plan {nombrePlan}
           </span>
         </div>
       )}

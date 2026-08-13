@@ -17,6 +17,12 @@ const CATEGORY_LABEL = {
   mercadeo: 'Mercadeo',
   transporte: 'Transporte y jornadas',
   otro: 'Otro',
+  // Vocabulario del esquema original: hay filas históricas que lo usan y sin
+  // esto se veían como código crudo en la tabla.
+  consultorio: 'Consultorio',
+  marketing: 'Mercadeo',
+  operational: 'Operación',
+  other: 'Otro',
 };
 
 /**
