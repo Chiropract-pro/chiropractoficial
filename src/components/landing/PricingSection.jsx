@@ -27,7 +27,7 @@ export default function PricingSection() {
             Para tu consultorio
           </h2>
           <p className="text-on-surface-variant text-lg mt-3 max-w-2xl mx-auto">
-            Empieza con 14 días gratis. Sin tarjeta. Cancela cuando quieras.
+            Empieza con 5 días gratis. Sin tarjeta. Cancela cuando quieras.
           </p>
 
           {/* Toggle Mensual/Anual */}
@@ -147,7 +147,7 @@ export default function PricingSection() {
         </div>
 
         <p className="text-center text-xs text-on-surface-variant mt-8 max-w-xl mx-auto">
-          Todos los planes incluyen 14 días de prueba sin cargo.
+          Todos los planes incluyen 5 días de prueba sin cargo.
           Pagos seguros con Wompi · Tu información encriptada · Cumplimiento DIAN.
         </p>
       </div>

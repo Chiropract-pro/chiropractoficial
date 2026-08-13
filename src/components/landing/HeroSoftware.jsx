@@ -47,7 +47,7 @@ export default function HeroSoftware() {
             onClick={goToCRM}
             className="clinical-gradient text-on-primary px-8 py-4 rounded-xl text-lg font-bold shadow-lg shadow-primary/10 hover:scale-[1.02] active:scale-95 transition-all inline-flex items-center justify-center gap-2"
           >
-            Empieza gratis 14 días <ArrowRight size={18} />
+            Empieza gratis 5 días <ArrowRight size={18} />
           </button>
           <a
             href="#medicos"

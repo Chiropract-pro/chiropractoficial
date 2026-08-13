@@ -18,7 +18,7 @@ import { todayStr } from '../utils/dates';
 
 
 const booked = (j) => j.booked ?? j.booked_count ?? 0;
-const price = (j) => j.price_per_patient ?? 150000;
+const price = (j) => j.price_per_patient ?? 165000;
 const fillOf = (j) => (j.capacity > 0 ? Math.round((booked(j) / j.capacity) * 100) : 0);
 
 export default function Jornadas() {
@@ -56,7 +56,7 @@ export default function Jornadas() {
       city: f.city.value,
       date: f.date.value,
       capacity: parseInt(f.capacity.value, 10) || 15,
-      price_per_patient: parseInt(f.price.value, 10) || 150000,
+      price_per_patient: parseInt(f.price.value, 10) || 165000,
       notes: f.notes.value || null,
     });
     setSaving(false);

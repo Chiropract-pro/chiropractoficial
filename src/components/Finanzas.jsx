@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
-  AlertTriangle, Building2, Download, MapPin, Plus, Receipt, Target, TrendingUp, Wallet,
+  AlertTriangle, Building2, Download, MapPin, Minus, Plus, Receipt, Target, TrendingUp, Wallet,
 } from 'lucide-react';
 import { formatCOP, formatDate } from '../utils/format';
 import { useTransactions, usePatients } from '../hooks/useTenantData';
@@ -40,7 +40,10 @@ export default function Finanzas() {
   const { transactions, loading, insertTransaction } = useTransactions();
   const { patients } = usePatients();
   const toast = useToast();
-  const [showNewForm, setShowNewForm] = useState(false);
+  // El formulario es el mismo para ingresos y gastos: cambia el tipo, el
+  // título y las categorías. `null` = cerrado.
+  const [nuevoTipo, setNuevoTipo] = useState(null);   // 'income' | 'expense'
+  const esGasto = nuevoTipo === 'expense';
   const [saving, setSaving] = useState(false);
 
   const todayStr = today();
@@ -59,6 +62,11 @@ export default function Finanzas() {
     const periodTx = within(transactions, period.from, period.to);
     const periodIncomes = within(incomes, period.from, period.to);
     const periodIncome = sum(periodIncomes);
+
+    // Los gastos existían en la base pero la pantalla solo miraba ingresos:
+    // era un registro de ventas, no un estado de resultados.
+    const expenses = transactions.filter((t) => t.type === 'expense');
+    const periodExpense = sum(within(expenses, period.from, period.to));
 
     // Periodo inmediatamente anterior, del mismo largo: sirve para comparar
     // cualquier rango, no solo meses.
@@ -103,6 +111,8 @@ export default function Finanzas() {
       periodTx,
       periodIncome,
       prevIncome,
+      periodExpense,
+      resultado: periodIncome - periodExpense,
       count: periodIncomes.length,
       avgPerCharge: periodIncomes.length > 0 ? Math.round(periodIncome / periodIncomes.length) : 0,
       delta: prevIncome > 0 ? Math.round(((periodIncome - prevIncome) / prevIncome) * 100) : undefined,
@@ -136,17 +146,20 @@ export default function Finanzas() {
     const f = e.target;
     setSaving(true);
     const r = await insertTransaction({
-      type: 'income',
+      type: nuevoTipo || 'income',
       amount: parseInt(f.amount.value, 10),
       category: f.category.value,
       description: f.description.value || null,
-      patient_id: f.patient_id.value || null,
+      // En modo gasto el campo de paciente no se pinta, así que aquí no
+      // existe. Sin el `?.` esto lanzaba un TypeError dentro de una función
+      // asíncrona: el botón no hacía nada y no aparecía ningún error.
+      patient_id: f.patient_id?.value || null,
       date: f.date.value,
     });
     setSaving(false);
     if (r.error) { toast.error(userFriendlyError(r.error)); return; }
-    toast.success('Ingreso registrado');
-    setShowNewForm(false);
+    toast.success(esGasto ? 'Gasto registrado' : 'Ingreso registrado');
+    setNuevoTipo(null);
   };
 
   return (
@@ -166,7 +179,8 @@ export default function Finanzas() {
           >
             Exportar periodo
           </Button>
-          <Button size="sm" icon={Plus} onClick={() => setShowNewForm(true)}>Registrar ingreso</Button>
+          <Button size="sm" icon={Plus} onClick={() => setNuevoTipo('income')}>Registrar ingreso</Button>
+          <Button size="sm" variant="outline" icon={Minus} onClick={() => setNuevoTipo('expense')}>Registrar gasto</Button>
         </PageHeader>
       </div>
 
@@ -179,9 +193,9 @@ export default function Finanzas() {
 
       <div>
         <StatGrid>
-          <Stat label="Ingresos del periodo" icon={Wallet} value={formatCOP(m.periodIncome)} sub={label} series={m.daily} delta={m.delta} />
-          <Stat label="Movimientos" icon={Receipt} value={String(m.count)} sub={m.count === 1 ? 'cobro registrado' : 'cobros registrados'} />
-          <Stat label="Promedio por cobro" icon={Target} value={formatCOP(m.avgPerCharge)} sub={`${m.span} ${m.span === 1 ? 'día' : 'días'}`} />
+          <Stat label="Ingresos" icon={Wallet} value={formatCOP(m.periodIncome)} sub={`${label} · ${m.count} ${m.count === 1 ? 'cobro' : 'cobros'}`} series={m.daily} delta={m.delta} />
+          <Stat label="Gastos" icon={Minus} value={formatCOP(m.periodExpense)} sub={m.periodExpense > 0 ? 'lo que salió del consultorio' : 'sin gastos registrados'} />
+          <Stat label="Resultado" icon={Target} tone={m.resultado < 0 ? 'danger' : undefined} value={formatCOP(m.resultado)} sub={`promedio por cobro ${formatCOP(m.avgPerCharge)}`} />
           <Stat label="Por cobrar" icon={AlertTriangle} tone="accent" value={formatCOP(totalDebt)} sub={`${debtors.length} ${debtors.length === 1 ? 'paciente' : 'pacientes'}`} />
         </StatGrid>
       </div>
@@ -358,14 +372,18 @@ export default function Finanzas() {
 
       {/* Registrar ingreso */}
       <Modal
-        open={showNewForm}
-        onClose={() => setShowNewForm(false)}
-        title="Registrar ingreso"
-        subtitle="Para cobros en efectivo o por fuera de la pasarela"
+        open={nuevoTipo !== null}
+        onClose={() => setNuevoTipo(null)}
+        title={esGasto ? 'Registrar gasto' : 'Registrar ingreso'}
+        subtitle={esGasto
+          ? 'Arriendo, servicios, insumos, nómina — lo que sale del consultorio'
+          : 'Para cobros en efectivo o por fuera de la pasarela'}
         footer={
           <div className="flex gap-2.5">
-            <Button variant="outline" className="flex-1" type="button" onClick={() => setShowNewForm(false)}>Cancelar</Button>
-            <Button className="flex-[2]" type="submit" form="new-income" loading={saving}>Registrar</Button>
+            <Button variant="outline" className="flex-1" type="button" onClick={() => setNuevoTipo(null)}>Cancelar</Button>
+            <Button className="flex-[2]" type="submit" form="new-income" loading={saving}>
+              {esGasto ? 'Registrar gasto' : 'Registrar ingreso'}
+            </Button>
           </div>
         }
       >
@@ -375,24 +393,42 @@ export default function Finanzas() {
           </Field>
           <FormGrid>
             <Field label="Categoría">
-              <Select name="category" defaultValue="consulta">
-                <option value="consulta">Consulta</option>
-                <option value="seguimiento">Seguimiento</option>
-                <option value="jornada">Jornada</option>
-                <option value="producto">Producto</option>
-                <option value="otro">Otro</option>
+              {/* Un gasto no se clasifica como «Consulta»: sus categorías son
+                  las del costo de operar el consultorio. */}
+              <Select name="category" defaultValue={esGasto ? 'arriendo' : 'consulta'} key={nuevoTipo}>
+                {esGasto ? (
+                  <>
+                    <option value="arriendo">Arriendo</option>
+                    <option value="servicios">Servicios públicos</option>
+                    <option value="insumos">Insumos y materiales</option>
+                    <option value="nomina">Nómina y honorarios</option>
+                    <option value="mercadeo">Mercadeo</option>
+                    <option value="transporte">Transporte y jornadas</option>
+                    <option value="otro">Otro</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="consulta">Consulta</option>
+                    <option value="seguimiento">Seguimiento</option>
+                    <option value="jornada">Jornada</option>
+                    <option value="producto">Producto</option>
+                    <option value="otro">Otro</option>
+                  </>
+                )}
               </Select>
             </Field>
             <Field label="Fecha" required>
               <Input name="date" type="date" required defaultValue={todayStr} />
             </Field>
           </FormGrid>
+          {!esGasto && (
           <Field label="Paciente" hint="Opcional — permite atribuir el ingreso por ciudad">
             <Select name="patient_id" defaultValue="">
               <option value="">Sin paciente asociado</option>
               {patients.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
             </Select>
           </Field>
+          )}
           <Field label="Descripción">
             <Textarea name="description" rows={2} placeholder="Detalle del ingreso…" />
           </Field>

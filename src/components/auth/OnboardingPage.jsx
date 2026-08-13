@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Building2, MapPin, Phone, ArrowRight, Loader2, CheckCircle, Users, LogIn } from 'lucide-react';
 
 const PLANS = [
-  { id: 'trial', name: 'Trial', price: 'Gratis', period: '14 días', features: ['Hasta 50 pacientes', '1 usuario', 'Módulo básico'], color: 'border-outline-variant' },
+  { id: 'trial', name: 'Trial', price: 'Gratis', period: '5 días', features: ['Hasta 50 pacientes', '1 usuario', 'Módulo básico'], color: 'border-outline-variant' },
   { id: 'basic', name: 'Básico', price: '$49 USD', period: '/mes', features: ['200 pacientes', '3 usuarios', 'Todos los módulos'], color: 'border-primary' },
   { id: 'pro', name: 'Pro', price: '$99 USD', period: '/mes', features: ['Pacientes ilimitados', '10 usuarios', 'API + integraciones', 'Soporte prioritario'], color: 'border-primary', popular: true },
 ];

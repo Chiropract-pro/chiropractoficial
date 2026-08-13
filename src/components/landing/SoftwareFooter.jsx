@@ -21,7 +21,7 @@ export default function SoftwareFooter() {
           >
             <h2 className="font-display text-4xl md:text-6xl font-semibold mb-6">Digitaliza tu consultorio hoy</h2>
             <p className="text-xl opacity-90 mb-10 max-w-2xl mx-auto">
-              14 días gratis, sin tarjeta. Únete a los quiroprácticos que ya dejaron atrás el cuaderno.
+              5 días gratis, sin tarjeta. Únete a los quiroprácticos que ya dejaron atrás el cuaderno.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button

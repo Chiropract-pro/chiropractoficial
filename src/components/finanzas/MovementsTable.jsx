@@ -4,10 +4,18 @@ import { formatCOP, formatDate } from '../../utils/format';
 import { Card, EmptyState, SectionHeader } from '../ui/Card';
 
 const CATEGORY_LABEL = {
+  // Ingresos
   consulta: 'Consulta',
   seguimiento: 'Seguimiento',
   jornada: 'Jornada',
   producto: 'Producto',
+  // Gastos
+  arriendo: 'Arriendo',
+  servicios: 'Servicios públicos',
+  insumos: 'Insumos y materiales',
+  nomina: 'Nómina y honorarios',
+  mercadeo: 'Mercadeo',
+  transporte: 'Transporte y jornadas',
   otro: 'Otro',
 };
 

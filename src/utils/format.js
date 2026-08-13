@@ -38,9 +38,9 @@ export const cities = ['Bogotá', 'Soatá', 'Guamal', 'Muzo', 'Garcés Navas'];
 // Ajustes → Tarifas; esto es solo el punto de partida y la red de seguridad
 // para las claves que no haya configurado.
 export const appointmentTypes = [
-  { value: 'primera_consulta', label: 'Primera consulta', price: 175000 },
-  { value: 'seguimiento', label: 'Seguimiento', price: 175000 },
-  { value: 'jornada', label: 'Jornada', price: 175000 },
+  { value: 'primera_consulta', label: 'Primera consulta', price: 165000 },
+  { value: 'seguimiento', label: 'Seguimiento', price: 165000 },
+  { value: 'jornada', label: 'Jornada', price: 165000 },
   { value: 'emergencia', label: 'Emergencia', price: 200000 },
 ];
 
