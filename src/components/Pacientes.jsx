@@ -3,7 +3,7 @@ import {
   Activity, ChevronRight, Download, Plus, Search, ShieldAlert, Users, Wallet, X,
 } from 'lucide-react';
 import { patientStatuses, formatCOP, formatShortDate, getAppointmentTypes } from '../utils/format';
-import { usePatients } from '../hooks/useTenantData';
+import { usePatients, useAppointments } from '../hooks/useTenantData';
 import { useAuth } from '../contexts/AuthContext';
 import PaymentLinkButton from './PaymentLinkButton';
 import { downloadCsv } from '../utils/csv';
@@ -14,6 +14,7 @@ import { Stat, StatGrid } from './ui/Stat';
 import { Select } from './ui/Field';
 import LoadingState from './LoadingState';
 import PatientDetailModal from './pacientes/PatientDetailModal';
+import NewAppointmentModal from './citas/NewAppointmentModal';
 import PatientFormModal from './pacientes/PatientFormModal';
 import { cn } from '../lib/utils';
 
@@ -22,10 +23,13 @@ const PAGE = 40;
 
 export default function Pacientes({ focusPatient, onFocusHandled }) {
   const { patients, loading, insertPatient, updatePatient, removePatient } = usePatients();
+  const { appointments, insertAppointment } = useAppointments();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCity, setFilterCity] = useState('all');
   const [selected, setSelected] = useState(null);
+  // Paciente al que se le va a agendar desde su propia ficha.
+  const [agendarPara, setAgendarPara] = useState(null);
   const [formFor, setFormFor] = useState(undefined); // undefined = cerrado · null = nuevo · obj = editar
   const [limit, setLimit] = useState(PAGE);
 
@@ -297,7 +301,21 @@ export default function Pacientes({ focusPatient, onFocusHandled }) {
         onClose={closeDetail}
         onEdit={() => setFormFor(detail)}
         onDelete={removePatient}
+        onAgendar={() => setAgendarPara(detail)}
       />
+
+      {/* El formulario se monta de cero con el paciente ya elegido: se abre
+          sobre la ficha, y al cerrarlo se vuelve a ella sin perder el sitio. */}
+      {agendarPara && (
+        <NewAppointmentModal
+          open
+          onClose={() => setAgendarPara(null)}
+          patients={patients}
+          appointments={appointments}
+          onCreate={insertAppointment}
+          pacienteFijo={agendarPara}
+        />
+      )}
 
       <PatientFormModal
         open={formFor !== undefined}

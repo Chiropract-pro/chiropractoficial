@@ -18,7 +18,7 @@ const LUGARES_SUGERIDOS = ['Consultorio', 'Soatá', 'Guamal', 'Muzo', 'Garcés N
  * El precio se muestra en vivo al elegir el tipo: antes se agendaba a ciegas y
  * la tarifa solo aparecía después, en la lista.
  */
-export default function NewAppointmentModal({ open, onClose, patients, onCreate, defaultDate, appointments = [] }) {
+export default function NewAppointmentModal({ open, onClose, patients, onCreate, defaultDate, appointments = [], pacienteFijo = null }) {
   const toast = useToast();
   const { tenant } = useAuth();
   const [type, setType] = useState('primera_consulta');
@@ -56,7 +56,7 @@ export default function NewAppointmentModal({ open, onClose, patients, onCreate,
       open={open}
       onClose={onClose}
       title="Agendar cita"
-      subtitle={`${patients.length} pacientes en el directorio`}
+      subtitle={pacienteFijo ? 'Para este paciente' : `${patients.length} pacientes en el directorio`}
       footer={
         <div className="flex gap-2.5">
           <Button variant="outline" className="flex-1" onClick={onClose} type="button">Cancelar</Button>
@@ -67,14 +67,27 @@ export default function NewAppointmentModal({ open, onClose, patients, onCreate,
       }
     >
       <form id="new-appointment" onSubmit={submit} className="space-y-4 pb-2">
-        <Field label="Paciente" required>
-          <Select name="patient_id" required defaultValue="">
-            <option value="" disabled>Seleccionar paciente…</option>
-            {patients.map((p) => (
-              <option key={p.id} value={p.id}>{p.full_name}{p.phone ? ` · ${p.phone}` : ''}</option>
-            ))}
-          </Select>
-        </Field>
+        {/* Si se entró desde la ficha de un paciente, no se vuelve a pedir
+            quién es: ya se sabe, y una lista de 1.427 nombres para reelegir al
+            mismo es una forma de equivocarse. */}
+        {pacienteFijo ? (
+          <Field label="Paciente">
+            <input type="hidden" name="patient_id" value={pacienteFijo.id} />
+            <p className="bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2.5 text-sm text-on-surface">
+              {pacienteFijo.full_name}
+              {pacienteFijo.phone && <span className="text-on-surface-variant"> · {pacienteFijo.phone}</span>}
+            </p>
+          </Field>
+        ) : (
+          <Field label="Paciente" required>
+            <Select name="patient_id" required defaultValue="">
+              <option value="" disabled>Seleccionar paciente…</option>
+              {patients.map((p) => (
+                <option key={p.id} value={p.id}>{p.full_name}{p.phone ? ` · ${p.phone}` : ''}</option>
+              ))}
+            </Select>
+          </Field>
+        )}
 
         <FormGrid>
           <Field label="Fecha" required>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   CalendarDays, Edit2, Folder, Mail, MapPin, MessageCircle, Phone, ShieldAlert,
-  Stethoscope, Trash2, User as UserIcon, Wallet,
+  Stethoscope, Trash2, User as UserIcon, Wallet, CalendarPlus,
 } from 'lucide-react';
 import { formatCOP, formatShortDate } from '../../utils/format';
 import { useToast } from '../Toast';
@@ -26,7 +26,7 @@ const TABS = [
  * mismo contenedor (antes el panel clínico heredaba el ancho de un diálogo
  * pensado para un formulario y las notas SOAP salían en una columna de 300px).
  */
-export default function PatientDetailModal({ patient, open, onClose, onEdit, onDelete }) {
+export default function PatientDetailModal({ patient, open, onClose, onEdit, onDelete, onAgendar }) {
   const [tab, setTab] = useState('data');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const toast = useToast();
@@ -133,7 +133,15 @@ export default function PatientDetailModal({ patient, open, onClose, onEdit, onD
 
           {/* Acciones */}
           <div className="flex flex-wrap gap-2 pt-1">
-            <Button icon={Edit2} onClick={onEdit} className="flex-1 min-w-[140px]">Editar</Button>
+            {/* Agendar desde aquí: es lo primero que uno quiere hacer con la
+                ficha abierta delante. Antes había que cerrarla, irse a Citas y
+                volver a buscar al paciente en la lista. */}
+            {onAgendar && (
+              <Button icon={CalendarPlus} onClick={onAgendar} className="flex-1 min-w-[140px]">
+                Agendar cita
+              </Button>
+            )}
+            <Button icon={Edit2} variant="outline" onClick={onEdit} className="flex-1 min-w-[140px]">Editar</Button>
             {waLink ? (
               <a
                 href={waLink}
