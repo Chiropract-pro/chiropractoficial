@@ -38,18 +38,30 @@ export function useTenantData(table, options = {}) {
     setLoading(true);
     setError(null);
     try {
-      let query = supabase
-        .from(table)
-        .select(options.select || '*')
-        .eq('tenant_id', tenant.id);
+      // PostgREST corta en 1.000 filas y NO avisa: devuelve 200 con las
+      // primeras mil y se ve como si esos fueran todos los datos. Este
+      // consultorio tiene 1.427 pacientes y 3.335 citas — sin paginar, el
+      // directorio escondía 427 personas, el buscador no las encontraba y el
+      // Radar calculaba sobre una base incompleta. Se pide de a mil hasta que
+      // una página vuelva corta.
+      const PAGINA = 1000;
+      const todas = [];
+      for (let desde = 0; ; desde += PAGINA) {
+        let query = supabase
+          .from(table)
+          .select(options.select || '*')
+          .eq('tenant_id', tenant.id);
 
-      if (options.order) {
-        query = query.order(options.order.column, { ascending: options.order.ascending ?? false });
+        if (options.order) {
+          query = query.order(options.order.column, { ascending: options.order.ascending ?? false });
+        }
+
+        const { data: rows, error: fetchError } = await query.range(desde, desde + PAGINA - 1);
+        if (fetchError) throw fetchError;
+        todas.push(...(rows || []));
+        if (!rows || rows.length < PAGINA) break;
       }
-
-      const { data: rows, error: fetchError } = await query;
-      if (fetchError) throw fetchError;
-      setData(rows || []);
+      setData(todas);
     } catch (err) {
       logger.error(`fetch ${table}`, err);
       setError(err.code || 'fetch_failed');
