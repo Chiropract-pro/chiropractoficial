@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import {
   ArrowLeft, BadgeCheck, MapPin, Award, Calendar, MessageCircle,
   AtSign, Globe, Stethoscope, CheckCircle2, Heart,
 } from 'lucide-react';
 import { usePractitioner } from '../../hooks/usePractitioners';
 import { useFeed } from '../../hooks/useFeed';
+import AgendarPublico from './AgendarPublico';
 
 function timeAgo(iso) {
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -55,6 +57,7 @@ function waLink(phone, name) {
 
 export default function PractitionerProfilePage({ slug, onBack }) {
   const { practitioner: p, loading } = usePractitioner(slug);
+  const [agendando, setAgendando] = useState(false);
 
   if (loading) {
     return (
@@ -125,14 +128,17 @@ export default function PractitionerProfilePage({ slug, onBack }) {
 
             {/* CTAs */}
             <div className="flex flex-wrap gap-3 mt-6">
-              {p.whatsapp && (
-                <a
-                  href={waLink(p.whatsapp, `${p.title} ${p.full_name}`)}
-                  target="_blank" rel="noopener noreferrer"
+              {/* «Agendar cita» abre el formulario, no WhatsApp: los dos
+                  botones llevaban al mismo chat, así que el principal no hacía
+                  nada distinto del secundario. */}
+              {p.accepting_patients && (
+                <button
+                  type="button"
+                  onClick={() => setAgendando(true)}
                   className="inline-flex items-center gap-2 clinical-gradient text-on-primary px-5 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-opacity"
                 >
-                  <Calendar size={16} /> Agendar cita
-                </a>
+                  <Calendar size={16} /> Pedir cita
+                </button>
               )}
               {p.whatsapp && (
                 <a
@@ -190,6 +196,14 @@ export default function PractitionerProfilePage({ slug, onBack }) {
           <AuthorPosts practitionerId={p.id} name={`${p.title} ${p.full_name.split(' ')[0]}`} />
         </div>
       </main>
+
+      {agendando && (
+        <AgendarPublico
+          slug={slug}
+          doctorName={`${p.title} ${p.full_name}`}
+          onClose={() => setAgendando(false)}
+        />
+      )}
     </div>
   );
 }
