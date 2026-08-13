@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../lib/logger';
 import { todayStr } from '../utils/dates';
-import { isDemoMode, DEMO_TABLES, DEMO_SALES } from '../lib/demo';
+import { isDemoMode, DEMO_SALES, demoLoad, demoSave } from '../lib/demo';
 
 // Pasarela de pago por defecto. Se puede cambiar sin tocar código con
 // VITE_PAYMENT_PROVIDER=wompi en el entorno.
@@ -14,9 +14,17 @@ let demoSeq = 1;
 
 export function useTenantData(table, options = {}) {
   const { tenant } = useAuth();
-  // En demostración los datos viven en memoria: se pueden crear y editar (para
-  // enseñar el flujo completo) pero nada sale del navegador.
-  const [data, setData] = useState(() => (DEMO ? [...(DEMO_TABLES[table] || [])] : []));
+  // En demostración los datos viven en el navegador: se pueden crear y editar
+  // (para enseñar el flujo completo) y sobreviven a una recarga, pero nada sale
+  // de la pestaña ni toca la base.
+  const [data, setData] = useState(() => (DEMO ? demoLoad(table) : []));
+
+  // En demostración, todo cambio de estado se guarda también en la pestaña.
+  const setDemoData = (updater) => setData((prev) => {
+    const next = typeof updater === 'function' ? updater(prev) : updater;
+    demoSave(table, next);
+    return next;
+  });
   const [loading, setLoading] = useState(!DEMO);
   const [error, setError] = useState(null);
 
@@ -66,7 +74,7 @@ export function useTenantData(table, options = {}) {
   const insert = async (record) => {
     if (DEMO) {
       const row = { ...record, id: `demo-new-${demoSeq++}`, created_at: new Date().toISOString() };
-      setData((prev) => [row, ...prev]);
+      setDemoData((prev) => [row, ...prev]);
       return { data: row };
     }
     if (!tenant?.id) return { error: 'No tenant' };
@@ -86,7 +94,7 @@ export function useTenantData(table, options = {}) {
   const update = async (id, updates) => {
     if (DEMO) {
       let row = null;
-      setData((prev) => prev.map((r) => (r.id === id ? (row = { ...r, ...updates }) : r)));
+      setDemoData((prev) => prev.map((r) => (r.id === id ? (row = { ...r, ...updates }) : r)));
       return { data: row };
     }
     const { data: row, error: updateError } = await supabase
@@ -105,7 +113,7 @@ export function useTenantData(table, options = {}) {
 
   const remove = async (id) => {
     if (DEMO) {
-      setData((prev) => prev.filter((r) => r.id !== id));
+      setDemoData((prev) => prev.filter((r) => r.id !== id));
       return { success: true };
     }
     const { error: deleteError } = await supabase

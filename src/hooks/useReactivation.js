@@ -29,7 +29,7 @@ const LOCAL_TOUCH_KEY = 'chiro_reactivation_touches';
 // Tarifa de referencia cuando el paciente no tiene histórico de pagos. Sale de
 // utils/format, que ya lee las tarifas del consultorio: tenerla quemada aquí
 // hacía que el Radar estimara el valor recuperable con el precio viejo.
-const DEFAULT_TICKET = appointmentTypes.find((t) => t.value === 'primera_consulta')?.price || 175000;
+const DEFAULT_TICKET = appointmentTypes.find((t) => t.value === 'primera_consulta')?.price || 165000;
 
 export const SEGMENTS = {
   saldo: {

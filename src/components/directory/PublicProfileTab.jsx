@@ -112,7 +112,7 @@ export default function PublicProfileTab() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-surface-container-high overflow-hidden flex items-center justify-center text-on-surface-variant flex-shrink-0">
-              {form.photo_url ? <img src={form.photo_url} alt="" className="w-full h-full object-cover" /> : <Stethoscope size={26} />}
+              {form.photo_url ? <img src={form.photo_url} alt="" className="w-full h-full object-cover object-[50%_22%]" /> : <Stethoscope size={26} />}
             </div>
             <div>
               <div className="flex items-center gap-1.5">

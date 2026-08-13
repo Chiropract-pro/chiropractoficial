@@ -6,22 +6,19 @@ import { userFriendlyError } from '../../lib/logger';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { Field, FormGrid, Input, Select, Textarea } from '../ui/Field';
+import PlaceInput from '../ui/PlaceInput';
 import { todayStr } from '../../utils/dates';
 
-const LOCATIONS = [
-  { value: 'consultorio', label: 'Consultorio' },
-  { value: 'soata', label: 'Soatá' },
-  { value: 'guamal', label: 'Guamal' },
-  { value: 'muzo', label: 'Muzo' },
-  { value: 'garces_navas', label: 'Garcés Navas' },
-];
+// Sugerencias de arranque. No es una lista cerrada: el lugar se escribe libre
+// y lo que ya se haya usado antes aparece como sugerencia.
+const LUGARES_SUGERIDOS = ['Consultorio', 'Soatá', 'Guamal', 'Muzo', 'Garcés Navas'];
 
 /**
  * Formulario de agendamiento. Hoja inferior en móvil, diálogo en escritorio.
  * El precio se muestra en vivo al elegir el tipo: antes se agendaba a ciegas y
  * la tarifa solo aparecía después, en la lista.
  */
-export default function NewAppointmentModal({ open, onClose, patients, onCreate, defaultDate }) {
+export default function NewAppointmentModal({ open, onClose, patients, onCreate, defaultDate, appointments = [] }) {
   const toast = useToast();
   const { tenant } = useAuth();
   const [type, setType] = useState('primera_consulta');
@@ -43,7 +40,7 @@ export default function NewAppointmentModal({ open, onClose, patients, onCreate,
       date: form.date.value,
       time: form.time.value,
       type: form.type.value,
-      location: form.location.value,
+      location: form.location.value.trim() || 'Consultorio',
       notes: form.notes.value || null,
       status: 'pendiente',
       price: appointmentTypes.find((t) => t.value === form.type.value)?.price || 0,
@@ -93,10 +90,13 @@ export default function NewAppointmentModal({ open, onClose, patients, onCreate,
               ))}
             </Select>
           </Field>
-          <Field label="Ubicación">
-            <Select name="location" defaultValue="consultorio">
-              {LOCATIONS.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
-            </Select>
+          <Field label="Lugar" hint="Cualquiera: consultorio, municipio, salón…">
+            <PlaceInput
+              name="location"
+              defaultValue="Consultorio"
+              placeholder="Consultorio"
+              options={[...LUGARES_SUGERIDOS, ...appointments.map((a) => a.location)]}
+            />
           </Field>
         </FormGrid>
 

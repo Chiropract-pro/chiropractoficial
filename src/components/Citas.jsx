@@ -244,6 +244,7 @@ export default function Citas() {
         patients={patients}
         onCreate={insertAppointment}
         defaultDate={view === 'week' ? dayShown : todayStr}
+        appointments={appointments}
       />
 
       {soapForApt && (

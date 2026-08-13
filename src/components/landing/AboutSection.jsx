@@ -16,7 +16,7 @@ export default function AboutSection() {
             <img
               src="/images/dr-diaz/01-portrait-formal.jpg"
               alt="Dr. Miguel Ángel Díaz"
-              className="w-full aspect-[4/5] object-cover"
+              className="w-full aspect-[4/5] object-cover object-[50%_22%]"
             />
           </div>
           <div className="absolute top-12 -right-4 glass-card p-5 rounded-xl border border-white/20 shadow-lg hidden lg:block">

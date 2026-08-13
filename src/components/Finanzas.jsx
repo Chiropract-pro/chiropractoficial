@@ -389,7 +389,7 @@ export default function Finanzas() {
       >
         <form id="new-income" onSubmit={submit} className="space-y-4 pb-2">
           <Field label="Monto (COP)" required>
-            <Input name="amount" type="number" required min="0" step="1000" inputMode="numeric" placeholder="175000" />
+            <Input name="amount" type="number" required min="0" step="1000" inputMode="numeric" placeholder="165000" />
           </Field>
           <FormGrid>
             <Field label="Categoría">

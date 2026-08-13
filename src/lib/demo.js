@@ -203,6 +203,37 @@ export const DEMO_TABLES = {
 
 export const DEMO_SALES = sales;
 
+// ── Memoria de la demostración ──────────────────────────────────────────────
+// Lo que se crea durante una demostración vive en `sessionStorage`, no solo en
+// memoria. Sin esto, agendar una cita frente al cliente y recargar la borraba:
+// el sistema parecía no guardar nada. Sigue sin salir del navegador y sigue sin
+// tocar la base — al cerrar la pestaña, la demostración vuelve a su estado
+// original, que es justo lo que se quiere para la siguiente.
+const CLAVE = 'chiropract-demo';
+
+export function demoLoad(table) {
+  const semilla = DEMO_TABLES[table] || [];
+  try {
+    const guardado = sessionStorage.getItem(`${CLAVE}:${table}`);
+    return guardado ? JSON.parse(guardado) : [...semilla];
+  } catch { return [...semilla]; }
+}
+
+export function demoSave(table, rows) {
+  try {
+    sessionStorage.setItem(`${CLAVE}:${table}`, JSON.stringify(rows));
+  } catch { /* cuota llena o modo privado: la demostración sigue, sin recordar */ }
+}
+
+/** Devuelve la demostración a su estado inicial (botón «Reiniciar»). */
+export function demoReset() {
+  try {
+    Object.keys(sessionStorage)
+      .filter((k) => k.startsWith(`${CLAVE}:`))
+      .forEach((k) => sessionStorage.removeItem(k));
+  } catch { /* nada que limpiar */ }
+}
+
 // ── Conversaciones de WhatsApp ──────────────────────────────────────────────
 // Nombres inventados, como todo lo demás de la demostración.
 const hace = (min) => new Date(Date.now() - min * 60000).toISOString();

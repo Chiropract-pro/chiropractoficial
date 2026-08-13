@@ -89,12 +89,16 @@ export default function PractitionerProfilePage({ slug, onBack }) {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         {/* Cabecera del perfil */}
         <div className="bg-surface-container-lowest border border-outline-variant rounded-3xl overflow-hidden">
-          <div className="h-32 sm:h-40 clinical-gradient" />
+          <div className="h-24 sm:h-28 clinical-gradient" />
           <div className="px-6 sm:px-8 pb-8">
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-16 sm:-mt-20">
-              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl border-4 border-surface-container-lowest bg-surface-container-low overflow-hidden flex-shrink-0 shadow-lg">
+            {/* Solo la foto se monta sobre el degradado. Antes el margen
+                negativo iba en la fila entera, así que el nombre y la insignia
+                «Verificado» quedaban encima del verde: ilegibles y pisando el
+                subtítulo. */}
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+              <div className="w-32 h-32 sm:w-40 sm:h-40 -mt-16 sm:-mt-20 rounded-2xl border-4 border-surface-container-lowest bg-surface-container-low overflow-hidden flex-shrink-0 shadow-lg">
                 {p.photo_url ? (
-                  <img src={p.photo_url} alt={p.full_name} className="w-full h-full object-cover" />
+                  <img src={p.photo_url} alt={p.full_name} className="w-full h-full object-cover object-[50%_22%]" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-on-surface-variant">
                     <Stethoscope size={48} />

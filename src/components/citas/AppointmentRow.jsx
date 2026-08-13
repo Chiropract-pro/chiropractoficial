@@ -7,7 +7,17 @@ import Modal from '../ui/Modal';
 import { cn } from '../../lib/utils';
 
 const typeLabel = (type) => appointmentTypes.find((at) => at.value === type)?.label || type || 'Cita';
-const locationLabel = (loc) => (loc === 'consultorio' ? 'Consultorio' : String(loc || '').replace(/_/g, ' '));
+// Las citas viejas guardan el lugar como clave ('garces_navas'); las nuevas
+// guardan lo que el usuario escribió. Esto pinta bien las dos.
+const LUGARES_CONOCIDOS = {
+  consultorio: 'Consultorio', soata: 'Soatá', guamal: 'Guamal',
+  muzo: 'Muzo', garces_navas: 'Garcés Navas',
+};
+const locationLabel = (loc) => {
+  const v = String(loc || '').trim();
+  if (!v) return 'Sin lugar';
+  return LUGARES_CONOCIDOS[v.toLowerCase()] || v;
+};
 
 const ACTION_STYLES = {
   confirm: 'bg-[#e0efe8] text-[#1f6b52] hover:bg-[#d2e7dd]',

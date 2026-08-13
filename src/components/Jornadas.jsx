@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react';
 import {
   CalendarDays, Car, CheckCircle, MapPin, Plus, TrendingUp, Users, XCircle,
 } from 'lucide-react';
-import { formatCOP, formatDate, cities } from '../utils/format';
+import { formatCOP, formatDate, cities, getAppointmentTypes } from '../utils/format';
 import { useJornadas } from '../hooks/useTenantData';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from './Toast';
 import { userFriendlyError } from '../lib/logger';
 import LoadingState from './LoadingState';
@@ -12,7 +13,8 @@ import { Card, EmptyState, PageHeader } from './ui/Card';
 import { ProgressRing, Stat, StatGrid } from './ui/Stat';
 import { SegmentedTabs } from './ui/Tabs';
 import Modal from './ui/Modal';
-import { Field, FormGrid, Input, Select, Textarea } from './ui/Field';
+import { Field, FormGrid, Input, Textarea } from './ui/Field';
+import PlaceInput from './ui/PlaceInput';
 import { cn } from '../lib/utils';
 import { todayStr } from '../utils/dates';
 
@@ -23,7 +25,12 @@ const fillOf = (j) => (j.capacity > 0 ? Math.round((booked(j) / j.capacity) * 10
 
 export default function Jornadas() {
   const { jornadas, loading, insertJornada, updateJornada, removeJornada } = useJornadas();
+  const { tenant } = useAuth();
   const toast = useToast();
+  // La tarifa sale de Ajustes → Tarifas, no de una constante: el formulario
+  // prellenaba 150.000 aunque el consultorio cobrara otra cosa, y ese era el
+  // valor que terminaba guardado.
+  const precioJornada = getAppointmentTypes(tenant).find((t) => t.value === 'jornada')?.price || 165000;
   const [tab, setTab] = useState('proximas');
   const [showNewForm, setShowNewForm] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -281,10 +288,13 @@ export default function Jornadas() {
       >
         <form id="new-jornada" onSubmit={submit} className="space-y-4 pb-2">
           <FormGrid>
-            <Field label="Ciudad" required>
-              <Select name="city" defaultValue={cities[1] || cities[0]}>
-                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
-              </Select>
+            <Field label="Lugar" required hint="Escribe el que sea: municipio, vereda, salón…">
+              <PlaceInput
+                name="city"
+                required
+                placeholder="Soatá"
+                options={[...cities, ...jornadas.map((j) => j.city)]}
+              />
             </Field>
             <Field label="Fecha" required>
               <Input name="date" type="date" required min={todayStr()} />
@@ -293,7 +303,7 @@ export default function Jornadas() {
               <Input name="capacity" type="number" min="1" defaultValue={15} inputMode="numeric" />
             </Field>
             <Field label="Precio por paciente (COP)">
-              <Input name="price" type="number" min="0" step="1000" defaultValue={150000} inputMode="numeric" />
+              <Input name="price" type="number" min="0" step="1000" defaultValue={precioJornada} inputMode="numeric" />
             </Field>
           </FormGrid>
           <Field label="Notas" hint="Ubicación exacta, equipo necesario, contacto local…">

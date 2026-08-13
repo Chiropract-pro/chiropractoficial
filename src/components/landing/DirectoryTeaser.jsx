@@ -10,7 +10,7 @@ function DoctorCard({ p }) {
     >
       <div className="aspect-[4/3] bg-surface-container-low overflow-hidden">
         {p.photo_url ? (
-          <img src={p.photo_url} alt={p.full_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+          <img src={p.photo_url} alt={p.full_name} className="w-full h-full object-cover object-[50%_22%] group-hover:scale-105 transition-transform" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-on-surface-variant"><Stethoscope size={40} /></div>
         )}

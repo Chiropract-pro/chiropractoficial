@@ -123,6 +123,13 @@ body {
   background-attachment: fixed;
 }
 
+/* Casillas y radios en el verde de la marca. Sin esto el navegador los pinta
+   con su azul (o el rojo del acento del sistema en macOS), que dentro de una
+   paleta de pino y papel se ve como un error. */
+input[type="checkbox"], input[type="radio"] {
+  accent-color: var(--color-primary);
+}
+
 /* Foco visible y coherente en toda la app (accesibilidad real, no outline del navegador) */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--color-primary);

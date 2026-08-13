@@ -158,7 +158,7 @@ function PaymentDialog({
                   onChange={(e) => setAmountStr(e.target.value.replace(/[^\d]/g, ''))}
                   inputMode="numeric"
                   autoFocus
-                  placeholder="175000"
+                  placeholder="165000"
                   className="mt-1 w-full bg-surface-container-low border border-outline-variant rounded-lg px-3 py-2.5 text-xl font-display font-semibold text-on-surface tnum focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />
                 <span className="block text-[11px] text-on-surface-variant mt-1">
