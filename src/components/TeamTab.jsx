@@ -39,11 +39,29 @@ export default function TeamTab() {
     if (!tenant?.id) return;
     setLoading(true);
     try {
-      const { data } = await supabase
+      // DOS consultas, no un anidado. `tenant_memberships.user_id` apunta por
+      // clave foránea a `auth.users`, NO a `profiles`, así que PostgREST no
+      // puede resolver `profiles!inner(...)`: devolvía error y —como el error
+      // se ignoraba— la pantalla mostraba «0 miembros» siempre. El dueño no se
+      // veía a sí mismo, y no había forma de cambiarle el rol a nadie ni de
+      // sacar a nadie del equipo.
+      const { data: filas, error: errMiembros } = await supabase
         .from('tenant_memberships')
-        .select('id, user_id, role, accepted_at, profiles!inner(id, full_name, phone, avatar_url)')
+        .select('id, user_id, role, accepted_at')
         .eq('tenant_id', tenant.id);
-      setMembers(data || []);
+      if (errMiembros) throw errMiembros;
+
+      const ids = (filas || []).map((m) => m.user_id);
+      const { data: perfiles, error: errPerfiles } = ids.length
+        ? await supabase.from('profiles').select('id, full_name, phone, avatar_url').in('id', ids)
+        : { data: [], error: null };
+      if (errPerfiles) throw errPerfiles;
+
+      const porId = new Map((perfiles || []).map((p) => [p.id, p]));
+      // Un miembro sin fila en `profiles` sigue apareciendo: es alguien del
+      // equipo aunque no haya completado su perfil, y esconderlo era justo el
+      // efecto que tenía el JOIN interno.
+      setMembers((filas || []).map((m) => ({ ...m, profiles: porId.get(m.user_id) || null })));
 
       // Invitaciones pendientes (solo owner/admin las ve por RLS)
       const { data: invs } = await supabase
@@ -180,9 +198,12 @@ export default function TeamTab() {
 
         <div className="space-y-3">
           {members.map((m) => {
-            const profile = m.profiles;
+            // Puede no haber perfil: alguien invitado que aún no completó sus
+            // datos sigue siendo del equipo y tiene que verse.
+            const profile = m.profiles || {};
+            const nombre = profile.full_name || 'Sin nombre todavía';
             const roleStyle = ROLE_LABELS[m.role] || { label: m.role, color: 'bg-surface-container-high text-on-surface-variant' };
-            const initials = (profile.full_name || 'U').split(' ').map((n) => n[0] || '').join('').slice(0, 2);
+            const initials = nombre.split(' ').map((n) => n[0] || '').join('').slice(0, 2);
             const isMe = m.user_id === membership?.user_id;
             const isConfirming = confirmRemove === m.id;
 
@@ -193,7 +214,7 @@ export default function TeamTab() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium text-on-surface">{profile.full_name}{isMe && <span className="text-xs text-on-surface-variant ml-1">(tú)</span>}</p>
+                    <p className="font-medium text-on-surface">{nombre}{isMe && <span className="text-xs text-on-surface-variant ml-1">(tú)</span>}</p>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleStyle.color}`}>{roleStyle.label}</span>
                   </div>
                   <p className="text-xs text-on-surface-variant truncate">{profile.phone || 'Sin teléfono registrado'}</p>
@@ -216,7 +237,7 @@ export default function TeamTab() {
                       </button>
                     ) : (
                       <>
-                        <button onClick={() => removeMember(m.id, profile.full_name)} className="text-xs px-2 py-1 bg-danger text-white rounded">Sí</button>
+                        <button onClick={() => removeMember(m.id, nombre)} className="text-xs px-2 py-1 bg-danger text-white rounded">Sí</button>
                         <button onClick={() => setConfirmRemove(null)} className="text-xs px-2 py-1 border rounded">No</button>
                       </>
                     )}
