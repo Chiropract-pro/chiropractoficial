@@ -104,7 +104,13 @@ export default function Conversaciones() {
       {/* Bandeja */}
       <div>
         <Card pad={false} className="overflow-hidden">
-          <div className="grid lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] h-[min(70vh,42rem)]">
+          {/* En móvil la columna se declara `minmax(0,1fr)` a propósito. Sin
+              ella, la rejilla de una sola columna la dimensiona `auto`, que es
+              el ancho del CONTENIDO: con mensajes largos la columna salía a
+              704px dentro de una tarjeta de 412px, y como la tarjeta recorta,
+              el chat quedaba cortado por la derecha en el teléfono. `1fr` con
+              mínimo 0 es lo único que la deja encogerse. */}
+          <div className="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] h-[min(70vh,42rem)]">
             {/* Lista */}
             <div className={`flex flex-col min-h-0 border-r border-outline-variant ${selected ? 'hidden lg:flex' : 'flex'}`}>
               <div className="p-3 border-b border-outline-variant space-y-2.5 flex-shrink-0">
